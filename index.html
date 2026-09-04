@@ -9,7 +9,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -28,6 +27,7 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 </head>
 <body class="pb-20">
 
@@ -470,9 +470,14 @@
                     <input type="number" id="depAmount" readonly class="w-full bg-slate-950 border border-slate-800 text-yellow-400 font-bold rounded-lg p-2.5 text-sm cursor-not-allowed">
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-xs text-slate-400" data-i18n="proof_payment_label">Preuve de Paiement (Capture d'écran / Photo)</label>
-                    <input type="file" id="depProofFile" accept="image/*" class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded-lg p-2 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500 file:text-slate-950 hover:file:bg-yellow-400 cursor-pointer">
+                <div class="space-y-3">
+                    <label class="text-xs text-slate-400" data-i18n="txid_label">ID de transaction (TxID / Hash) <span class="text-red-400">*</span></label>
+                    <input type="text" id="depTxId" required autocomplete="off" placeholder="Entrez votre TxID ici" data-i18n-placeholder="txid_placeholder" class="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 text-sm font-mono focus:outline-none focus:border-yellow-500">
+                    <p class="text-[10px] text-slate-500 leading-relaxed" data-i18n="txid_help">Après avoir effectué votre paiement USDT, copiez le TxID depuis Binance et collez-le ici.</p>
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-400" data-i18n="proof_payment_label">Capture d'écran / Photo <span class="text-slate-500">(facultatif)</span></label>
+                        <input type="file" id="depProofFile" accept="image/*" class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded-lg p-2 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500 file:text-slate-950 hover:file:bg-yellow-400 cursor-pointer">
+                    </div>
                 </div>
 
                 <button onclick="processDeposit()" class="w-full gold-gradient text-slate-900 font-bold py-3 rounded-xl text-sm shadow-lg" data-i18n="confirm_dep_btn">
@@ -650,6 +655,9 @@
                 pay_method: "Méthode de Paiement",
                 dep_address: "Adresse de dépôt",
                 amount_usdt: "Montant (USDT)",
+                 txid_label: "ID de transaction (TxID / Hash)",
+                 txid_placeholder: "Entrez votre TxID ici",
+                 txid_help: "Après avoir effectué votre paiement USDT, copiez le TxID depuis Binance et collez-le ici.",
                 proof_payment_label: "Preuve de Paiement (Capture d'écran / Photo)",
                 confirm_dep_btn: "Confirmer et Soumettre le Dépôt",
                 withdraw_req_title: "Demande de Retrait",
@@ -751,6 +759,9 @@
                 pay_method: "Payment Method",
                 dep_address: "Deposit Address",
                 amount_usdt: "Amount (USDT)",
+                 txid_label: "Transaction ID (TxID / Hash)",
+                 txid_placeholder: "Enter your TxID here",
+                 txid_help: "After making your USDT payment, copy the TxID from Binance and paste it here.",
                 proof_payment_label: "Proof of Payment (Screenshot / Photo)",
                 confirm_dep_btn: "Confirm and Submit Deposit",
                 withdraw_req_title: "Withdrawal Request",
@@ -852,6 +863,9 @@
                 pay_method: "Método de Pago",
                 dep_address: "Dirección de depósito",
                 amount_usdt: "Monto (USDT)",
+                 txid_label: "ID de transacción (TxID / Hash)",
+                 txid_placeholder: "Ingrese su TxID aquí",
+                 txid_help: "Después de realizar su pago USDT, copie el TxID desde Binance y péguelo aquí.",
                 proof_payment_label: "Prueba de Pago (Captura / Foto)",
                 confirm_dep_btn: "Confirmar y Enviar Depósito",
                 withdraw_req_title: "Solicitud de Retiro",
@@ -953,6 +967,9 @@
                 pay_method: "支付方式",
                 dep_address: "充值地址",
                 amount_usdt: "金额 (USDT)",
+                 txid_label: "交易ID (TxID / Hash)",
+                 txid_placeholder: "在此输入您的TxID",
+                 txid_help: "完成USDT付款后，请从Binance复制TxID并粘贴到这里。",
                 proof_payment_label: "付款证明 (截图/照片)",
                 confirm_dep_btn: "确认并提交充值",
                 withdraw_req_title: "提现申请",
@@ -1054,6 +1071,9 @@
                 pay_method: "طريقة الدفع",
                 dep_address: "عنوان الإيداع",
                 amount_usdt: "المبلغ (USDT)",
+                 txid_label: "معرّف المعاملة (TxID / Hash)",
+                 txid_placeholder: "أدخل TxID هنا",
+                 txid_help: "بعد إجراء دفعة USDT، انسخ TxID من Binance والصقه هنا.",
                 proof_payment_label: "إثبات الدفع (لقطة شاشة / صورة)",
                 confirm_dep_btn: "تأكيد وإرسال الإيداع",
                 withdraw_req_title: "طلب السحب",
@@ -1090,6 +1110,11 @@
                 }
             });
 
+            const txInput = document.getElementById('depTxId');
+            if (txInput && i18nTranslations[lang] && i18nTranslations[lang].txid_placeholder) {
+                txInput.placeholder = i18nTranslations[lang].txid_placeholder;
+            }
+
             renderVIPs();
             renderRechargeVipSelection();
             updateTasksUI();
@@ -1108,6 +1133,7 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         const vipQuestionsDatabase = {
             1: {
@@ -1377,19 +1403,26 @@
                         return;
                     }
 
+                    let referrerUid = null;
+                    if (rawRefCode) {
+                        let cleanCode = rawRefCode.replace("INF-", "").toLowerCase();
+                        const usersSnap = await db.collection("users").get();
+                        usersSnap.forEach(doc => {
+                            if (doc.id.substring(0,6).toLowerCase() === cleanCode) {
+                                referrerUid = doc.id;
+                            }
+                        });
+                    }
+
                     const cred = await firebase.auth().createUserWithEmailAndPassword(phoneEmail, password);
                     const uid = cred.user.uid;
 
-                    // Le client crée uniquement le profil de base.
-                    // L'attribution du parrain et la construction des niveaux 1/2/3
-                    // sont faites côté serveur par la fonction registerReferral.
                     await db.collection("users").doc(uid).set({
                         uid: uid,
                         phone: `+${fullPhone}`,
                         countryCode: countryCode,
                         isActivated: false,
-                        referrerId: null,
-                        referralStatus: rawRefCode ? 'pending_server_validation' : 'none',
+                        referrerId: referrerUid,
                         taskRevenues: 0,
                         commissionBalance: 0,
                         vipLevel: 0,
@@ -1399,19 +1432,19 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    if (rawRefCode) {
-                        try {
-                            const registerReferral = firebase.functions().httpsCallable('registerReferral');
-                            await registerReferral({ referralCode: rawRefCode });
-                            showNotification("Inscription réussie. Parrainage enregistré automatiquement.", "success");
-                        } catch (refErr) {
-                            console.error("Validation du parrainage côté serveur:", refErr);
-                            showNotification("Compte créé. Le lien de parrainage est en cours de validation.", "info");
-                        }
-                    } else {
-                        showNotification("Compte créé avec succès !", "success");
+                    if (referrerUid) {
+                        await db.collection("team_history").add({
+                            referrerId: referrerUid,
+                            referralId: uid,
+                            level: 1,
+                            joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            depositAmount: 0,
+                            depositStatus: 'none',
+                            commissionRate: 20,
+                            commissionAmount: 0,
+                            commissionStatus: 'pending'
+                        });
                     }
-
                 }
             } catch (err) {
                 showNotification("Erreur d'authentification : " + err.message, "error");
@@ -1833,7 +1866,7 @@
 
                       html += `
                           <tr class="border-b border-slate-800/50">
-                              <td class="p-2 font-mono">${String(data.referralId || "-").substring(0,5)}</td>
+                              <td class="p-2 font-mono">${data.referralId.substring(0,5)}</td>
                               <td class="p-2 font-bold text-yellow-400">Niveau ${data.level}</td>
                               <td class="p-2">${dateInsc}</td>
                               <td class="p-2 font-semibold">${data.depositAmount || 0} USDT</td>
@@ -1915,35 +1948,169 @@
               });
         }
 
+        // Compresse la capture côté téléphone avant de l'enregistrer dans Firestore.
+        // Cela évite les blocages de Firebase Storage et permet à l'administrateur
+        // d'afficher directement la preuve depuis le document du dépôt.
+        function compressDepositProof(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve(null);
+                if (!file.type || !file.type.startsWith('image/')) {
+                    reject(new Error("Veuillez sélectionner une image (PNG, JPG, WEBP, etc.)."));
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error("Impossible de lire la capture sélectionnée."));
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error("La capture sélectionnée est invalide."));
+                    img.onload = () => {
+                        const maxSide = 1100;
+                        const ratio = Math.min(1, maxSide / Math.max(img.width, img.height));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(img.width * ratio));
+                        canvas.height = Math.max(1, Math.round(img.height * ratio));
+
+                        const ctx = canvas.getContext('2d', { alpha: false });
+                        if (!ctx) {
+                            reject(new Error("Votre navigateur ne permet pas de traiter cette image."));
+                            return;
+                        }
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // On réduit progressivement pour rester largement sous la limite
+                        // Firestore d'environ 1 MiB par document.
+                        let quality = 0.72;
+                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        while (dataUrl.length > 850000 && quality > 0.35) {
+                            quality -= 0.07;
+                            dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        }
+
+                        if (dataUrl.length > 900000) {
+                            reject(new Error("Cette capture est trop lourde. Essayez une capture d'écran plus petite."));
+                            return;
+                        }
+
+                        resolve({
+                            dataUrl: dataUrl,
+                            originalName: file.name,
+                            mimeType: 'image/jpeg',
+                            size: Math.round(dataUrl.length * 0.75)
+                        });
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function processDeposit() {
-            const amount = parseFloat(document.getElementById('depAmount').value);
+            const button = document.querySelector('button[onclick="processDeposit()"]');
+            const amountInput = document.getElementById('depAmount');
+            const txInput = document.getElementById('depTxId');
             const fileInput = document.getElementById('depProofFile');
 
-            if (!fileInput.files || fileInput.files.length === 0) {
-                showNotification("Veuillez joindre une preuve de paiement (capture d'écran).", "error");
+            const amount = parseFloat(amountInput ? amountInput.value : '0');
+            const txId = txInput ? txInput.value.trim() : '';
+
+            if (!currentUser || !currentUser.uid) {
+                showNotification("Votre session a expiré. Veuillez vous reconnecter.", "error");
                 return;
             }
 
-            showNotification("Téléversement et soumission du dépôt en cours...", "info");
+            if (!Number.isFinite(amount) || amount <= 0) {
+                showNotification("Veuillez saisir un montant de dépôt valide.", "error");
+                if (amountInput) amountInput.focus();
+                return;
+            }
 
-            setTimeout(async () => {
-                try {
-                    await db.collection("deposits").add({
-                        userId: currentUser.uid,
-                        vipLevel: selectedVipLevelForDeposit,
-                        amount: amount,
-                        method: document.getElementById('depositMethod').value,
-                        status: 'pending',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+            if (!txId) {
+                showNotification("Veuillez saisir votre ID de transaction (TxID / Hash).", "error");
+                if (txInput) txInput.focus();
+                return;
+            }
 
-                    showNotification("Dépôt soumis avec succès ! En attente d'approbation admin.", "success");
+            if (txId.length < 8) {
+                showNotification("Le TxID semble trop court. Vérifiez l'ID de transaction copié depuis Binance.", "error");
+                if (txInput) txInput.focus();
+                return;
+            }
+
+            if (button) {
+                button.disabled = true;
+                button.style.opacity = '0.65';
+                button.style.pointerEvents = 'none';
+            }
+
+            showNotification("Préparation de la preuve et enregistrement du dépôt...", "info");
+
+            try {
+                const network = document.getElementById('depositMethod')?.value || 'TRC20';
+                const depositAddress = document.getElementById('depositAddressText')?.innerText.trim() || '';
+                const depositRef = db.collection("deposits").doc();
+
+                let proofDataUrl = null;
+                let proofFileName = null;
+
+                // La capture reste facultative. Si elle existe, elle est compressée
+                // puis enregistrée directement dans le document Firestore.
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+
+                    if (file.size > 10 * 1024 * 1024) {
+                        throw new Error("La capture ne doit pas dépasser 10 Mo avant compression.");
+                    }
+
+                    showNotification("Traitement de la capture d'écran...", "info");
+                    const proof = await compressDepositProof(file);
+                    proofDataUrl = proof.dataUrl;
+                    proofFileName = proof.originalName;
+                }
+
+                showNotification("Enregistrement du dépôt...", "info");
+
+                await depositRef.set({
+                    depositId: depositRef.id,
+                    userId: currentUser.uid,
+                    vipLevel: selectedVipLevelForDeposit,
+                    amount: amount,
+                    network: network,
+                    method: network,
+                    depositAddress: depositAddress,
+                    txId: txId,
+                    txID: txId,
+                    proofUrl: proofDataUrl,
+                    proofData: proofDataUrl,
+                    proofFileName: proofFileName,
+                    hasProof: !!proofDataUrl,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showNotification("Dépôt soumis avec succès ! En attente d'approbation admin.", "success");
+
+                if (txInput) txInput.value = '';
+                if (fileInput) fileInput.value = '';
+
+                setTimeout(() => {
                     backToVipSelection();
                     switchTab('dashboard');
-                } catch (err) {
-                    showNotification("Erreur lors de la soumission : " + err.message, "error");
+                }, 700);
+            } catch (err) {
+                console.error('Erreur processDeposit:', err);
+                const message = err && err.message ? err.message : "Une erreur inconnue est survenue.";
+                showNotification("Échec du dépôt : " + message, "error");
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.style.opacity = '';
+                    button.style.pointerEvents = '';
                 }
-            }, 1000);
+            }
         }
 
         function updateDepositAddress() {
