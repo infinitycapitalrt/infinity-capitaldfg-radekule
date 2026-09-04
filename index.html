@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinity Capital - Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0b0e14;
+            color: #e2e8f0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .gold-gradient { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .card-gradient { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
+        .gold-text {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <!-- Conteneur de Notifications / Toast Intégré -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 max-w-xs w-full pointer-events-none"></div>
+
+    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full gold-gradient flex items-center justify-center font-bold text-slate-900">
+                <i class="fa-solid font-bold fa-infinity"></i>
+            </div>
+            <span class="font-extrabold text-lg gold-text tracking-wide">INFINITY</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs font-semibold text-yellow-400 flex items-center gap-1">
+                <i class="fa-solid fa-coins"></i> <span>USDT</span>
+            </div>
+            
+            <div class="relative">
+                <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-yellow-500 cursor-pointer">
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="en">🇬🇧 EN</option>
+                    <option value="es">🇪🇸 ES</option>
+                    <option value="zh">🇨🇳 中文</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <section id="view-auth" class="max-w-md mx-auto p-4 space-y-4">
+        <div class="card-gradient border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
+            <div class="text-center space-y-2">
+                <h2 id="authTitle" class="text-2xl font-black text-white" data-i18n="auth_title_login">Connexion</h2>
+                <p id="authSubtitle" class="text-xs text-slate-400" data-i18n="auth_subtitle_login">Accédez à votre espace d'investissement sécurisé</p>
+            </div>
+
+            <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                <button id="tabLoginBtn" onclick="toggleAuthMode('login')" class="py-2.5 rounded-lg bg-yellow-500 text-slate-950 transition" data-i18n="tab_login">Connexion</button>
+                <button id="tabRegisterBtn" onclick="toggleAuthMode('register')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition" data-i18n="tab_register">Inscription</button>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs text-slate-400" data-i18n="label_phone">Pays & Numéro de Téléphone</label>
+                    <div class="flex gap-2">
+                        <select id="countryCodeSelect" class="w-1/3 bg-slate-950 border border-slate-800 text-white rounded-xl px-2 py-2.5 text-xs focus:outline-none focus:border-yellow-500">
+                            <option value="+243">🇨🇩 CD (+243)</option>
+                            <option value="+33">🇫🇷 FR (+33)</option>
+                            <option value="+1">🇺🇸 US (+1)</option>
+                            <option value="+237">🇨🇲 CM (+237)</option>
+                            <option value="+225">🇨🇮 CI (+225)</option>
+                            <option value="+221">🇸🇳 SN (+221)</option>
+                            <option value="+212">🇲🇦 MA (+212)</option>
+                            <option value="+213">🇩🇿 DZ (+213)</option>
+                            <option value="+216">🇹🇳 TN (+216)</option>
+                            <option value="+229">🇧🇯 BJ (+229)</option>
+                            <option value="+226">🇧🇫 BF (+226)</option>
+                            <option value="+224">🇬🇳 GN (+224)</option>
+                            <option value="+223">🇲🇱 ML (+223)</option>
+                            <option value="+228">🇹🇬 TG (+228)</option>
+                            <option value="+242">🇨🇬 CG (+242)</option>
+                            <option value="+241">🇬🇦 GA (+241)</option>
+                            <option value="+235">🇹🇩 TD (+235)</option>
+                            <option value="+227">🇳🇪 NE (+227)</option>
+                            <option value="+234">🇳🇬 NG (+234)</option>
+                            <option value="+233">🇬🇭 GH (+233)</option>
+                            <option value="+254">🇰🇪 KE (+254)</option>
+                            <option value="+255">🇹🇿 TZ (+255)</option>
+                            <option value="+256">🇺🇬 UG (+256)</option>
+                            <option value="+250">🇷🇼 RW (+250)</option>
+                            <option value="+257">🇧🇮 BI (+257)</option>
+                            <option value="+244">🇦🇴 AO (+244)</option>
+                            <option value="+258">🇲🇿 MZ (+258)</option>
+                            <option value="+260">🇿🇲 ZM (+260)</option>
+                            <option value="+263">🇿🇼 ZW (+263)</option>
+                            <option value="+27">🇿🇦 ZA (+27)</option>
+                        </select>
+                        <div class="relative w-2/3">
+                            <i class="fa-solid fa-phone absolute left-3 top-3 text-slate-500 text-xs"></i>
+                            <input type="tel" id="authPhone" required placeholder="812345678" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-yellow-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs text-slate-400" data-i18n="label_password">Mot de passe</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-500 text-xs"></i>
+                        <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 text-white rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-yellow-500">
+                    </div>
+                </div>
+
+                <div id="referralFieldBox" class="space-y-1 hidden">
+                    <label class="text-xs text-slate-400" data-i18n="label_refcode">Code de Parrainage</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user-plus absolute left-3 top-3 text-slate-500 text-xs"></i>
+                        <input type="text" id="authReferralCode" placeholder="Code parrain (Optionnel)" class="w-full bg-slate-950 border border-slate-800 text-yellow-400 font-mono rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <span id="autoRefNotice" class="text-[10px] text-green-400 hidden"><i class="fa-solid fa-link mr-1"></i><span data-i18n="ref_detected">Lien de parrainage détecté et appliqué !</span></span>
+                </div>
+
+                <button type="submit" id="authSubmitBtn" class="w-full gold-gradient text-slate-900 font-bold py-3 rounded-xl text-xs shadow-lg transition" data-i18n="btn_login_submit">
+                    Se Connecter
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <main id="app" class="max-w-md mx-auto p-4 space-y-5 hidden">
+        <section id="view-dashboard" class="space-y-4">
+            <div class="card-gradient rounded-2xl p-5 border border-slate-800 relative overflow-hidden shadow-xl">
+                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl"></div>
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs text-slate-400 font-medium uppercase tracking-wider" data-i18n="total_balance_title">Solde Total Disponible (USDT)</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20" id="userVipBadge">VIP 0</span>
+                </div>
+                <div class="text-3xl font-black text-white mb-4">
+                    <span id="totalBalance">0.00</span> <span class="text-sm font-bold text-yellow-400">USDT</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800/80">
+                    <div>
+                        <div class="text-[10px] text-slate-400" data-i18n="task_revenues">Revenus Tâches VIP</div>
+                        <div class="text-sm font-bold text-green-400"><span id="taskRevenues">0.00</span> USDT</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400" data-i18n="commissions_balance">Solde Commissions</div>
+                        <div class="text-sm font-bold text-yellow-400"><span id="commissions">0.00</span> USDT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <button onclick="switchTab('recharge')" class="bg-slate-800/60 hover:bg-slate-800 p-3 rounded-xl border border-slate-700/50 flex flex-col items-center gap-1 transition">
+                    <div class="w-10 h-10 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center text-lg"><i class="fa-solid fa-wallet"></i></div>
+                    <span class="text-[11px] font-medium text-slate-300" data-i18n="deposit">Dépôt</span>
+                </button>
+                <button onclick="switchTab('withdraw')" class="bg-slate-800/60 hover:bg-slate-800 p-3 rounded-xl border border-slate-700/50 flex flex-col items-center gap-1 transition">
+                    <div class="w-10 h-10 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center text-lg"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                    <span class="text-[11px] font-medium text-slate-300" data-i18n="withdraw">Retrait</span>
+                </button>
+                <button onclick="switchTab('team')" class="bg-slate-800/60 hover:bg-slate-800 p-3 rounded-xl border border-slate-700/50 flex flex-col items-center gap-1 transition">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg"><i class="fa-solid fa-users"></i></div>
+                    <span class="text-[11px] font-medium text-slate-300" data-i18n="team">Équipe</span>
+                </button>
+                <button onclick="openCS()" class="bg-slate-800/60 hover:bg-slate-800 p-3 rounded-xl border border-slate-700/50 flex flex-col items-center gap-1 transition">
+                    <div class="w-10 h-10 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg"><i class="fa-solid fa-headset"></i></div>
+                    <span class="text-[11px] font-medium text-slate-300" data-i18n="support">Support</span>
+                </button>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-crown text-yellow-400"></i> <span data-i18n="vip_levels_title">Niveaux d'Investissement VIP (1 - 10)</span>
+                </h3>
+                <div id="vipContainer" class="space-y-3"></div>
+            </div>
+        </section>
+
+        <section id="view-tasks" class="hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <h2 class="text-lg font-bold text-white mb-1" data-i18n="tasks_center_title">Centre de Tâches VIP</h2>
+                <p class="text-xs text-slate-400" data-i18n="tasks_center_desc">Répondez aux 5 questions quotidiennes réservées à votre VIP pour encaisser vos revenus.</p>
+            </div>
+
+            <div id="taskMainCard" class="card-gradient border border-slate-800 rounded-xl p-5 space-y-4">
+                <div id="taskStateIntro" class="space-y-4 text-center">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-400"><span data-i18n="active_vip">VIP Actif</span> : <b id="taskCurrentVipText" class="text-yellow-400">VIP 0</b></span>
+                        <span class="text-slate-400"><span data-i18n="account_status">Statut du Compte</span> : <b id="taskAccountStatusText" class="text-red-400" data-i18n="status_not_activated">Non Activé</b></span>
+                    </div>
+
+                    <div id="taskLockMessage" class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-400" data-i18n="task_lock_msg">
+                        Effectuez un dépôt approuvé pour activer vos 5 tâches quotidiennes.
+                    </div>
+
+                    <button onclick="startTaskSession()" id="startTasksBtn" class="w-full gold-gradient text-slate-900 py-3 rounded-xl font-bold text-sm shadow-lg disabled:opacity-50" data-i18n="start_session_btn">
+                        Démarrer la Session (5 Tâches)
+                    </button>
+                </div>
+
+                <div id="taskQuizBox" class="hidden space-y-4">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <span class="text-xs font-bold text-yellow-400" id="quizProgressText">Question 1 / 5</span>
+                        <div class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 px-3 py-1 rounded-full">
+                            <i class="fa-solid fa-stopwatch text-red-400 text-xs"></i>
+                            <span id="quizTimer" class="text-xs font-extrabold text-red-400">15s</span>
+                        </div>
+                    </div>
+
+                    <div id="quizQuestionText" class="text-sm font-semibold text-white min-h-[48px] flex items-center" data-i18n="loading_question">
+                        Chargement de la question...
+                    </div>
+
+                    <div id="quizOptionsContainer" class="space-y-2"></div>
+
+                    <button id="quizNextBtn" onclick="proceedNextQuizQuestion()" disabled class="w-full gold-gradient text-slate-900 font-bold py-3 rounded-xl text-xs shadow-lg disabled:opacity-40" data-i18n="btn_validate_wait">
+                        Veuillez patienter (15s)...
+                    </button>
+                </div>
+
+                <div id="taskStatsBox" class="hidden space-y-4">
+                    <div class="text-center space-y-1">
+                        <h3 class="text-base font-bold text-white flex items-center justify-center gap-2" data-i18n="session_stats_title">
+                            📊 STATISTIQUES DE LA SESSION
+                        </h3>
+                        <p class="text-[11px] text-slate-400" id="statsDateText">Date : -</p>
+                    </div>
+
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-300">
+                            <span data-i18n="stats_vip_level">Niveau VIP concerné :</span>
+                            <span class="font-bold text-yellow-400" id="statsVipText">VIP 1</span>
+                        </div>
+                        <div class="flex justify-between text-slate-300">
+                            <span data-i18n="stats_total_q">Questions totales :</span>
+                            <span class="font-bold text-white">5</span>
+                        </div>
+                        <div class="flex justify-between text-green-400">
+                            <span data-i18n="stats_success">✅ Réussies :</span>
+                            <span class="font-bold" id="statsSuccessText">0</span>
+                        </div>
+                        <div class="flex justify-between text-red-400">
+                            <span data-i18n="stats_failed">❌ Échouées :</span>
+                            <span class="font-bold" id="statsFailText">0</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-800 flex justify-between text-sm font-extrabold">
+                            <span class="text-white" data-i18n="stats_earned">💰 Gain obtenu :</span>
+                            <span class="text-yellow-400" id="statsGainText">0.00 USDT</span>
+                        </div>
+                    </div>
+
+                    <button onclick="handleNextTasksClick()" id="nextTasksBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 rounded-xl text-xs transition" data-i18n="next_tasks_btn">
+                        ➡️ TÂCHES SUIVANTES
+                    </button>
+                </div>
+
+                <div id="taskUnlockConditionBox" class="hidden space-y-3">
+                    <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-2">
+                        <div class="text-xs font-bold text-blue-400 flex items-center gap-1.5" data-i18n="unlock_condition_title">
+                            <i class="fa-solid fa-lock text-sm"></i> Condition pour débloquer les tâches suivantes :
+                        </div>
+                        <p class="text-[11px] text-slate-300" data-i18n="unlock_condition_desc">
+                            👥 <b>INVITER 2 PERSONNES</b><br>
+                            Vos 2 filleuls doivent s'inscrire, faire un dépôt et faire **approuver** leur dépôt par l'administrateur.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+                        <div class="flex justify-between text-slate-400">
+                            <span data-i18n="req_referrals">Filleuls validés requis :</span>
+                            <span class="font-bold text-white">2</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400">
+                            <span data-i18n="curr_referrals">Filleuls validés actuels :</span>
+                            <span class="font-bold text-yellow-400" id="unlockReferralsCount">0 / 2</span>
+                        </div>
+                    </div>
+
+                    <button onclick="copyRef()" class="w-full gold-gradient text-slate-900 font-bold py-2.5 rounded-xl text-xs" data-i18n="copy_invite_link">
+                        Copier mon lien d'invitation
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-team" class="hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                <h2 class="text-lg font-bold text-white" data-i18n="referral_prog_title">Programme de Parrainage</h2>
+                <p id="refSubtitle" class="text-xs text-slate-400" data-i18n="referral_prog_desc">Invitez des membres pour débloquer vos commissions sur 3 niveaux.</p>
+                
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex items-center justify-between">
+                    <span class="text-xs text-slate-300 font-mono" id="refCodeDisplay" data-i18n="loading_text">Chargement...</span>
+                    <button onclick="copyRef()" class="text-xs bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded border border-yellow-500/30" data-i18n="copy_btn">Copier</button>
+                </div>
+            </div>
+
+            <div id="refStatusBadge" class="p-3 rounded-xl text-center text-xs font-medium border"></div>
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400" data-i18n="lvl_1">Niveau 1</div>
+                    <div class="text-lg font-bold text-yellow-400" id="lvl1Rate">20%</div>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400" data-i18n="lvl_2">Niveau 2</div>
+                    <div class="text-lg font-bold text-slate-300" id="lvl2Rate">3%</div>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div class="text-xs text-slate-400" data-i18n="lvl_3">Niveau 3</div>
+                    <div class="text-lg font-bold text-slate-300" id="lvl3Rate">1%</div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2" data-i18n="team_history_title">
+                    📜 HISTORIQUE DE L’ÉQUIPE
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[11px] text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+                            <tr>
+                                <th class="p-2" data-i18n="th_ref">Filleul</th>
+                                <th class="p-2" data-i18n="th_lvl">Niveau</th>
+                                <th class="p-2" data-i18n="th_date">Inscrit le</th>
+                                <th class="p-2" data-i18n="th_dep">Dépôt</th>
+                                <th class="p-2" data-i18n="th_status">Statut Dépôt</th>
+                                <th class="p-2" data-i18n="th_rate">Taux</th>
+                                <th class="p-2" data-i18n="th_comm">Commission</th>
+                                <th class="p-2" data-i18n="th_comm_date">Date Comm.</th>
+                                <th class="p-2" data-i18n="th_comm_status">Statut Comm.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamHistoryTable">
+                            <tr>
+                                <td colspan="9" class="p-3 text-center text-slate-500" data-i18n="loading_history">Chargement de l'historique...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-white" data-i18n="sep_comm_bal">Solde Commissions Séparé</h3>
+                    <span class="text-sm font-bold text-yellow-400"><span id="commBalanceText">0.00</span> USDT</span>
+                </div>
+                <p class="text-[11px] text-slate-400" data-i18n="comm_fee_info">Frais : 10% | Retrait Minimum : 5 USDT (Utilisateurs non activés)</p>
+                
+                <div class="space-y-2">
+                    <input type="number" id="commWithdrawAmount" placeholder="Montant commission à retirer (USDT)" class="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2 text-xs">
+                    <button onclick="requestCommissionWithdrawal()" id="commWithdrawBtn" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs shadow disabled:opacity-40" data-i18n="comm_withdraw_btn">
+                        💰 RETRAIT DES COMMISSIONS
+                    </button>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800">
+                    <h4 class="text-xs font-bold text-slate-400 mb-2" data-i18n="comm_withdraw_hist">Historique des retraits de commissions</h4>
+                    <div id="commWithdrawalsHistory" class="space-y-1.5 text-[11px]"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-profile" class="hidden space-y-4">
+            <div class="card-gradient border border-slate-800 rounded-xl p-5 text-center space-y-3">
+                <div class="w-16 h-16 mx-auto rounded-full gold-gradient flex items-center justify-center text-slate-900 text-2xl font-bold">
+                    <i class="fa-solid fa-user shadow-md"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-white" id="profileEmail" data-i18n="user_label">Utilisateur</h2>
+                    <span class="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20" id="profileVipTag">VIP 0</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2" data-i18n="my_deposits_history">
+                    <i class="fa-solid fa-wallet text-yellow-400"></i> Historique de mes Dépôts
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[11px] text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+                            <tr>
+                                <th class="p-2" data-i18n="th_date">Date</th>
+                                <th class="p-2" data-i18n="th_vip">VIP</th>
+                                <th class="p-2" data-i18n="th_amount">Montant</th>
+                                <th class="p-2" data-i18n="th_status">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userDepositsHistoryTable">
+                            <tr><td colspan="4" class="p-3 text-center text-slate-500" data-i18n="loading_text">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2" data-i18n="company_history_title">
+                    <i class="fa-solid fa-building text-yellow-400"></i> Historique de l'Entreprise
+                </h3>
+                <p class="text-xs text-slate-300 leading-relaxed" data-i18n="company_history_desc">
+                    Fondée en 2021, <b>Infinity Capital</b> s'est imposée comme une plateforme leader dans la gestion d'actifs numériques et la simplification des marchés financiers décentralisés. Notre mission est d'offrir un accès équitable aux opportunités d'investissement à haut rendement en USDT à travers le monde.
+                </p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2" data-i18n="company_operation_title">
+                    <i class="fa-solid fa-gears text-yellow-400"></i> Fonctionnement de la Plateforme
+                </h3>
+                <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside">
+                    <li data-i18n="op_rule_1"><b>Système VIP :</b> Choisissez un plan d'investissement pour débloquer des revenus quotidiens proportionnels.</li>
+                    <li data-i18n="op_rule_2"><b>Tâches Quotidiennes :</b> Répondez chaque jour à 5 questions QCM pour valider et percevoir votre rendement.</li>
+                    <li data-i18n="op_rule_3"><b>Programme de Parrainage :</b> Invitez vos proches et gagnez des commissions directes sur 3 niveaux (jusqu'à 32%).</li>
+                </ul>
+            </div>
+
+            <button onclick="logout()" class="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 font-bold py-3 rounded-xl text-xs transition flex items-center justify-center gap-2" data-i18n="logout_btn">
+                <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
+            </button>
+        </section>
+
+        <section id="view-recharge" class="hidden space-y-4">
+            <div id="rechargeStepPlans" class="space-y-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <h2 class="text-lg font-bold text-white" data-i18n="choose_vip_plan">Choisir un plan VIP</h2>
+                    <p class="text-xs text-slate-400" data-i18n="choose_vip_desc">Cliquez sur "Investir" sur le plan de votre choix pour afficher les détails du dépôt.</p>
+                </div>
+                <div id="vipSelectionContainer" class="space-y-3"></div>
+            </div>
+
+            <div id="rechargeStepPayment" class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4 hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <button onclick="backToVipSelection()" class="text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition" data-i18n="back_to_vip">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Retour aux VIP
+                    </button>
+                    <span id="selectedVipBadgeHeader" class="text-xs font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full">VIP X</span>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400" data-i18n="pay_method">Méthode de Paiement</label>
+                    <select id="depositMethod" onchange="updateDepositAddress()" class="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 text-sm">
+                        <option value="TRC20">USDT (TRX - Tron TRC20)</option>
+                        <option value="BEP20">USDT (BSC - BNB Smart Chain BEP20)</option>
+                    </select>
+                </div>
+
+                <div id="cryptoAddressBox" class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+                    <div class="flex justify-between items-center text-xs text-slate-400">
+                        <span><span data-i18n="dep_address">Adresse de dépôt</span> <span id="networkLabel" class="text-yellow-400 font-bold">(TRC20)</span> :</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900 p-2 rounded border border-slate-800 gap-2">
+                        <span id="depositAddressText" class="text-xs text-slate-200 font-mono break-all">TDcSMa4Fs4BmYzLnkXzLi2Boo3ZQRhybB9</span>
+                        <button onclick="copyDepositAddress()" class="text-xs bg-yellow-500/20 text-yellow-400 px-2.5 py-1 rounded border border-yellow-500/30 flex-shrink-0">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400" data-i18n="amount_usdt">Montant à Payer (USDT)</label>
+                    <input type="number" id="depAmount" readonly class="w-full bg-slate-950 border border-slate-800 text-yellow-400 font-bold rounded-lg p-2.5 text-sm cursor-not-allowed">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400" data-i18n="proof_payment_label">Preuve de Paiement (Capture d'écran / Photo)</label>
+                    <input type="file" id="depProofFile" accept="image/*" class="w-full bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded-lg p-2 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500 file:text-slate-950 hover:file:bg-yellow-400 cursor-pointer">
+                </div>
+
+                <button onclick="processDeposit()" class="w-full gold-gradient text-slate-900 font-bold py-3 rounded-xl text-sm shadow-lg" data-i18n="confirm_dep_btn">
+                    Confirmer et Soumettre le Dépôt
+                </button>
+            </div>
+        </section>
+
+        <section id="view-withdraw" class="hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+                <h2 class="text-lg font-bold text-white" data-i18n="withdraw_req_title">Demande de Retrait</h2>
+                
+                <div id="withdrawInfoRule" class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1"></div>
+
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400" data-i18n="rcv_address">Adresse de Réception USDT</label>
+                    <input type="text" id="withdrawalDest" placeholder="Ex: T..." class="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 text-sm">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400" data-i18n="withdraw_amount">Montant à Retirer (USDT)</label>
+                    <input type="number" id="withAmount" oninput="calculateWithdrawalFees()" placeholder="Saisir montant en USDT" class="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 text-sm">
+                </div>
+
+                <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-xs space-y-1">
+                    <div class="flex justify-between text-slate-400">
+                        <span><span data-i18n="withdraw_fees">Frais de retrait</span> (<span id="withdrawFeeRateText">7%</span>) :</span>
+                        <span class="text-red-400 font-bold"><span id="withdrawFeeAmount">0.00</span> USDT</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300 font-bold pt-1 border-t border-slate-800">
+                        <span data-i18n="net_receive">Net à recevoir :</span>
+                        <span class="text-green-400"><span id="withdrawNetAmount">0.00</span> USDT</span>
+                    </div>
+                </div>
+
+                <button onclick="processWithdrawal()" id="mainWithdrawBtn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg" data-i18n="validate_withdraw_btn">
+                    Valider le Retrait
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <nav id="appNav" class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 z-50 hidden">
+        <div class="max-w-md mx-auto grid grid-cols-4 py-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-yellow-400">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px] font-medium" data-i18n="nav_home">Accueil</span>
+            </button>
+            <button onclick="switchTab('tasks')" id="nav-tasks" class="flex flex-col items-center gap-1 text-slate-500">
+                <i class="fa-solid fa-list-check text-lg"></i>
+                <span class="text-[10px] font-medium" data-i18n="nav_tasks">Tâches</span>
+            </button>
+            <button onclick="switchTab('team')" id="nav-team" class="flex flex-col items-center gap-1 text-slate-500">
+                <i class="fa-solid fa-users text-lg"></i>
+                <span class="text-[10px] font-medium" data-i18n="nav_team">Équipe</span>
+            </button>
+            <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center gap-1 text-slate-500">
+                <i class="fa-solid fa-user text-lg"></i>
+                <span class="text-[10px] font-medium" data-i18n="nav_profile">Moi</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Système de notifications Toast unifié (Remplace les alert() intrusifs)
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-900 border-green-500/30 text-green-400';
+            let icon = 'fa-circle-check';
+            if (type === 'error') {
+                bgClass = 'bg-slate-900 border-red-500/30 text-red-400';
+                icon = 'fa-triangle-exclamation';
+            } else if (type === 'info') {
+                bgClass = 'bg-slate-900 border-blue-500/30 text-blue-400';
+                icon = 'fa-circle-info';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-3 p-3.5 rounded-xl border shadow-xl text-xs font-semibold backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base flex-shrink-0"></i><span class="flex-1">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        const i18nTranslations = {
+            fr: {
+                auth_title_login: "Connexion",
+                auth_subtitle_login: "Accédez à votre espace d'investissement sécurisé",
+                auth_title_reg: "Inscription",
+                auth_subtitle_reg: "Créez un compte et commencez à générer des revenus",
+                tab_login: "Connexion",
+                tab_register: "Inscription",
+                label_phone: "Pays & Numéro de Téléphone",
+                label_password: "Mot de passe",
+                label_refcode: "Code de Parrainage",
+                ref_detected: "Lien de parrainage détecté et appliqué !",
+                btn_login_submit: "Se Connecter",
+                btn_reg_submit: "S'inscrire",
+                total_balance_title: "Solde Total Disponible (USDT)",
+                task_revenues: "Revenus Tâches VIP",
+                commissions_balance: "Solde Commissions",
+                deposit: "Dépôt",
+                withdraw: "Retrait",
+                team: "Équipe",
+                support: "Support",
+                vip_levels_title: "Niveaux d'Investissement VIP (1 - 10)",
+                tasks_center_title: "Centre de Tâches VIP",
+                tasks_center_desc: "Répondez aux 5 questions quotidiennes réservées à votre VIP pour encaisser vos revenus.",
+                active_vip: "VIP Actif",
+                account_status: "Statut du Compte",
+                status_not_activated: "Non Activé",
+                status_activated: "Activé (Dépôt Approuvé)",
+                task_lock_msg: "Effectuez un dépôt approuvé pour activer vos 5 tâches quotidiennes.",
+                start_session_btn: "Démarrer la Session (5 Tâches)",
+                loading_question: "Chargement de la question...",
+                btn_validate_wait: "Veuillez patienter (15s)...",
+                btn_validate_ready: "Valider / Passer à l'étape suivante",
+                session_stats_title: "📊 STATISTIQUES DE LA SESSION",
+                stats_vip_level: "Niveau VIP concerné :",
+                stats_total_q: "Questions totales :",
+                stats_success: "✅ Réussies :",
+                stats_failed: "❌ Échouées :",
+                stats_earned: "💰 Gain obtenu :",
+                next_tasks_btn: "➡️ TÂCHES SUIVANTES",
+                unlock_condition_title: "Condition pour débloquer les tâches suivantes :",
+                unlock_condition_desc: "👥 <b>INVITER 2 PERSONNES</b><br>Vos 2 filleuls doivent s'inscrire, faire un dépôt et faire **approuver** leur dépôt par l'administrateur.",
+                req_referrals: "Filleuls validés requis :",
+                curr_referrals: "Filleuls validés actuels :",
+                copy_invite_link: "Copier mon lien d'invitation",
+                referral_prog_title: "Programme de Parrainage",
+                referral_prog_desc: "Invitez des membres pour débloquer vos commissions sur 3 niveaux.",
+                copy_btn: "Copier",
+                lvl_1: "Niveau 1",
+                lvl_2: "Niveau 2",
+                lvl_3: "Niveau 3",
+                team_history_title: "📜 HISTORIQUE DE L’ÉQUIPE",
+                th_ref: "Filleul",
+                th_lvl: "Niveau",
+                th_date: "Inscrit le",
+                th_dep: "Dépôt",
+                th_status: "Statut Dépôt",
+                th_rate: "Taux",
+                th_comm: "Commission",
+                th_comm_date: "Date Comm.",
+                th_comm_status: "Statut Comm.",
+                loading_history: "Chargement de l'historique...",
+                loading_text: "Chargement...",
+                sep_comm_bal: "Solde Commissions Séparé",
+                comm_fee_info: "Frais : 10% | Retrait Minimum : 5 USDT (Utilisateurs non activés)",
+                comm_withdraw_btn: "💰 RETRAIT DES COMMISSIONS",
+                comm_withdraw_hist: "Historique des retraits de commissions",
+                user_label: "Utilisateur",
+                my_deposits_history: "Historique de mes Dépôts",
+                th_vip: "VIP",
+                th_amount: "Montant",
+                company_history_title: "Historique de l'Entreprise",
+                company_history_desc: "Fondée en 2021, Infinity Capital s'est imposée comme une plateforme leader dans la gestion d'actifs numériques et la simplification des marchés financiers décentralisés.",
+                company_operation_title: "Fonctionnement de la Plateforme",
+                op_rule_1: "<b>Système VIP :</b> Choisissez un plan d'investissement pour débloquer des revenus quotidiens proportionnels.",
+                op_rule_2: "<b>Tâches Quotidiennes :</b> Répondez chaque jour à 5 questions QCM pour valider et percevoir votre rendement.",
+                op_rule_3: "<b>Programme de Parrainage :</b> Invitez vos proches et gagnez des commissions directes sur 3 niveaux (jusqu'à 32%).",
+                logout_btn: "Déconnexion",
+                choose_vip_plan: "Choisir un plan VIP",
+                choose_vip_desc: "Cliquez sur \"Investir\" sur le plan de votre choix pour afficher les détails du dépôt.",
+                back_to_vip: "Retour aux VIP",
+                pay_method: "Méthode de Paiement",
+                dep_address: "Adresse de dépôt",
+                amount_usdt: "Montant (USDT)",
+                proof_payment_label: "Preuve de Paiement (Capture d'écran / Photo)",
+                confirm_dep_btn: "Confirmer et Soumettre le Dépôt",
+                withdraw_req_title: "Demande de Retrait",
+                rcv_address: "Adresse de Réception USDT",
+                withdraw_amount: "Montant à Retirer (USDT)",
+                withdraw_fees: "Frais de retrait",
+                net_receive: "Net à recevoir :",
+                validate_withdraw_btn: "Valider le Retrait",
+                nav_home: "Accueil",
+                nav_tasks: "Tâches",
+                nav_team: "Équipe",
+                nav_profile: "Moi",
+                plan_price: "Prix du plan",
+                daily_revenue: "Revenu quotidien (5 QCM)",
+                est_return: "Rendement estimé",
+                subscribe: "Investir",
+                days_label: "365 jours"
+            },
+            en: {
+                auth_title_login: "Login",
+                auth_subtitle_login: "Access your secure investment space",
+                auth_title_reg: "Register",
+                auth_subtitle_reg: "Create an account and start earning revenue",
+                tab_login: "Login",
+                tab_register: "Register",
+                label_phone: "Country & Phone Number",
+                label_password: "Password",
+                label_refcode: "Referral Code",
+                ref_detected: "Referral link detected and applied!",
+                btn_login_submit: "Sign In",
+                btn_reg_submit: "Sign Up",
+                total_balance_title: "Total Available Balance (USDT)",
+                task_revenues: "VIP Task Revenues",
+                commissions_balance: "Commissions Balance",
+                deposit: "Deposit",
+                withdraw: "Withdraw",
+                team: "Team",
+                support: "Support",
+                vip_levels_title: "VIP Investment Levels (1 - 10)",
+                tasks_center_title: "VIP Task Center",
+                tasks_center_desc: "Answer the 5 daily questions reserved for your VIP level to collect your earnings.",
+                active_vip: "Active VIP",
+                account_status: "Account Status",
+                status_not_activated: "Not Activated",
+                status_activated: "Activated (Approved Deposit)",
+                task_lock_msg: "Make an approved deposit to activate your 5 daily tasks.",
+                start_session_btn: "Start Session (5 Tasks)",
+                loading_question: "Loading question...",
+                btn_validate_wait: "Please wait (15s)...",
+                btn_validate_ready: "Validate / Next Step",
+                session_stats_title: "📊 SESSION STATISTICS",
+                stats_vip_level: "Target VIP Level:",
+                stats_total_q: "Total Questions:",
+                stats_success: "✅ Success:",
+                stats_failed: "❌ Failed:",
+                stats_earned: "💰 Earned:",
+                next_tasks_btn: "➡️ NEXT TASKS",
+                unlock_condition_title: "Condition to unlock next tasks:",
+                unlock_condition_desc: "👥 <b>INVITE 2 PEOPLE</b><br>Your 2 referrals must register, make a deposit, and have their deposit **approved** by the admin.",
+                req_referrals: "Required validated referrals:",
+                curr_referrals: "Current validated referrals:",
+                copy_invite_link: "Copy my invite link",
+                referral_prog_title: "Referral Program",
+                referral_prog_desc: "Invite members to unlock commissions across 3 levels.",
+                copy_btn: "Copy",
+                lvl_1: "Level 1",
+                lvl_2: "Level 2",
+                lvl_3: "Level 3",
+                team_history_title: "📜 TEAM HISTORY",
+                th_ref: "Referral",
+                th_lvl: "Level",
+                th_date: "Joined",
+                th_dep: "Deposit",
+                th_status: "Deposit Status",
+                th_rate: "Rate",
+                th_comm: "Commission",
+                th_comm_date: "Comm. Date",
+                th_comm_status: "Comm. Status",
+                loading_history: "Loading history...",
+                loading_text: "Loading...",
+                sep_comm_bal: "Separate Commission Balance",
+                comm_fee_info: "Fee: 10% | Min Withdrawal: 5 USDT (Inactive users)",
+                comm_withdraw_btn: "💰 WITHDRAW COMMISSIONS",
+                comm_withdraw_hist: "Commission withdrawal history",
+                user_label: "User",
+                my_deposits_history: "My Deposits History",
+                th_vip: "VIP",
+                th_amount: "Amount",
+                company_history_title: "Company History",
+                company_history_desc: "Founded in 2021, Infinity Capital has established itself as a leading platform in digital asset management and decentralized financial market simplification.",
+                company_operation_title: "Platform Operation",
+                op_rule_1: "<b>VIP System:</b> Choose an investment plan to unlock proportional daily income.",
+                op_rule_2: "<b>Daily Tasks:</b> Answer 5 MCQ questions daily to validate and collect your yield.",
+                op_rule_3: "<b>Referral Program:</b> Invite friends and earn direct commissions across 3 levels (up to 32%).",
+                logout_btn: "Logout",
+                choose_vip_plan: "Choose a VIP Plan",
+                choose_vip_desc: "Click 'Invest' on your preferred plan to view deposit details.",
+                back_to_vip: "Back to VIPs",
+                pay_method: "Payment Method",
+                dep_address: "Deposit Address",
+                amount_usdt: "Amount (USDT)",
+                proof_payment_label: "Proof of Payment (Screenshot / Photo)",
+                confirm_dep_btn: "Confirm and Submit Deposit",
+                withdraw_req_title: "Withdrawal Request",
+                rcv_address: "USDT Receiving Address",
+                withdraw_amount: "Amount to Withdraw (USDT)",
+                withdraw_fees: "Withdrawal Fee",
+                net_receive: "Net to receive:",
+                validate_withdraw_btn: "Validate Withdrawal",
+                nav_home: "Home",
+                nav_tasks: "Tasks",
+                nav_team: "Team",
+                nav_profile: "Me",
+                plan_price: "Plan Price",
+                daily_revenue: "Daily Revenue (5 MCQs)",
+                est_return: "Estimated Return",
+                subscribe: "Invest",
+                days_label: "365 days"
+            },
+            es: {
+                auth_title_login: "Iniciar Sesión",
+                auth_subtitle_login: "Accede a tu espacio de inversión seguro",
+                auth_title_reg: "Registro",
+                auth_subtitle_reg: "Crea una cuenta y comienza a generar ingresos",
+                tab_login: "Iniciar Sesión",
+                tab_register: "Registro",
+                label_phone: "País y Número de Teléfono",
+                label_password: "Contraseña",
+                label_refcode: "Código de Referido",
+                ref_detected: "¡Enlace de referido detectado y aplicado!",
+                btn_login_submit: "Iniciar Sesión",
+                btn_reg_submit: "Registrarse",
+                total_balance_title: "Saldo Total Disponible (USDT)",
+                task_revenues: "Ingresos por Tareas VIP",
+                commissions_balance: "Saldo de Comisiones",
+                deposit: "Depósito",
+                withdraw: "Retiro",
+                team: "Equipo",
+                support: "Soporte",
+                vip_levels_title: "Niveles de Inversión VIP (1 - 10)",
+                tasks_center_title: "Centro de Tareas VIP",
+                tasks_center_desc: "Responde las 5 preguntas diarias reservadas para tu nivel VIP para cobrar tus ganancias.",
+                active_vip: "VIP Activo",
+                account_status: "Estado de la Cuenta",
+                status_not_activated: "No Activado",
+                status_activated: "Activado (Depósito Aprobado)",
+                task_lock_msg: "Realiza un depósito aprobado para activar tus 5 tareas diarias.",
+                start_session_btn: "Iniciar Sesión (5 Tareas)",
+                loading_question: "Cargando pregunta...",
+                btn_validate_wait: "Por favor espere (15s)...",
+                btn_validate_ready: "Validar / Siguiente paso",
+                session_stats_title: "📊 ESTADÍSTICAS DE LA SESIÓN",
+                stats_vip_level: "Nivel VIP objetivo:",
+                stats_total_q: "Preguntas totales:",
+                stats_success: "✅ Exitosas:",
+                stats_failed: "❌ Fallidas:",
+                stats_earned: "💰 Ganancia obtenida:",
+                next_tasks_btn: "➡️ SIGUIENTES TAREAS",
+                unlock_condition_title: "Condición para desbloquear las siguientes tareas:",
+                unlock_condition_desc: "👥 <b>INVITAR A 2 PERSONAS</b><br>Tus 2 referidos deben registrarse, hacer un depósito y tener su depósito **aprobado** por el administrador.",
+                req_referrals: "Referidos validados requeridos:",
+                curr_referrals: "Referidos validados actuales:",
+                copy_invite_link: "Copiar mi enlace de invitación",
+                referral_prog_title: "Programa de Referidos",
+                referral_prog_desc: "Invita miembros para desbloquear tus comisiones en 3 niveles.",
+                copy_btn: "Copiar",
+                lvl_1: "Nivel 1",
+                lvl_2: "Nivel 2",
+                lvl_3: "Nivel 3",
+                team_history_title: "📜 HISTORIAL DEL EQUIPO",
+                th_ref: "Referido",
+                th_lvl: "Nivel",
+                th_date: "Inscrito",
+                th_dep: "Depósito",
+                th_status: "Estado Depósito",
+                th_rate: "Tasa",
+                th_comm: "Comisión",
+                th_comm_date: "Fecha Com.",
+                th_comm_status: "Estado Com.",
+                loading_history: "Cargando historial...",
+                loading_text: "Cargando...",
+                sep_comm_bal: "Saldo de Comisiones Separado",
+                comm_fee_info: "Comisión: 10% | Retiro Mínimo: 5 USDT (Usuarios inactivos)",
+                comm_withdraw_btn: "💰 RETIRO DE COMISIONES",
+                comm_withdraw_hist: "Historial de retiros de comisiones",
+                user_label: "Usuario",
+                my_deposits_history: "Historial de mis Depósitos",
+                th_vip: "VIP",
+                th_amount: "Monto",
+                company_history_title: "Historial de la Empresa",
+                company_history_desc: "Fundada en 2021, Infinity Capital se ha consolidado como plataforma líder en gestión de activos digitales y simplificación de mercados financieros descentralizados.",
+                company_operation_title: "Funcionamiento de la Plataforma",
+                op_rule_1: "<b>Sistema VIP:</b> Elige un plan de inversión para desbloquear ingresos diarios proporcionales.",
+                op_rule_2: "<b>Tareas Diarias:</b> Responde cada día 5 preguntas de opción múltiple para validar y cobrar tu rendimiento.",
+                op_rule_3: "<b>Programa de Referidos:</b> Invita a tus amigos y gana comisiones directas en 3 niveles (hasta 32%).",
+                logout_btn: "Cerrar Sesión",
+                choose_vip_plan: "Elegir un plan VIP",
+                choose_vip_desc: "Haz clic en 'Invertir' en el plan de tu preferencia para ver los detalles del depósito.",
+                back_to_vip: "Volver a VIPs",
+                pay_method: "Método de Pago",
+                dep_address: "Dirección de depósito",
+                amount_usdt: "Monto (USDT)",
+                proof_payment_label: "Prueba de Pago (Captura / Foto)",
+                confirm_dep_btn: "Confirmar y Enviar Depósito",
+                withdraw_req_title: "Solicitud de Retiro",
+                rcv_address: "Dirección de Recepción USDT",
+                withdraw_amount: "Monto a Retirar (USDT)",
+                withdraw_fees: "Comisión de retiro",
+                net_receive: "Neto a recibir:",
+                validate_withdraw_btn: "Validar Retiro",
+                nav_home: "Inicio",
+                nav_tasks: "Tareas",
+                nav_team: "Equipo",
+                nav_profile: "Perfil",
+                plan_price: "Precio del plan",
+                daily_revenue: "Ingreso diario (5 preguntas)",
+                est_return: "Rendimiento estimado",
+                subscribe: "Invertir",
+                days_label: "365 días"
+            },
+            zh: {
+                auth_title_login: "登录",
+                auth_subtitle_login: "访问您的安全投资空间",
+                auth_title_reg: "注册",
+                auth_subtitle_reg: "创建一个账户并开始赚取收益",
+                tab_login: "登录",
+                tab_register: "注册",
+                label_phone: "国家及手机号",
+                label_password: "密码",
+                label_refcode: "推荐码",
+                ref_detected: "检测到推荐链接并已应用！",
+                btn_login_submit: "登录",
+                btn_reg_submit: "注册",
+                total_balance_title: "总可用余额 (USDT)",
+                task_revenues: "VIP 任务收益",
+                commissions_balance: "佣金余额",
+                deposit: "充值",
+                withdraw: "提现",
+                team: "团队",
+                support: "客服",
+                vip_levels_title: "VIP 投资等级 (1 - 10)",
+                tasks_center_title: "VIP 任务中心",
+                tasks_center_desc: "回答为您 VIP 等级保留的每日 5 个问题以领取收益。",
+                active_vip: "当前 VIP",
+                account_status: "账户状态",
+                status_not_activated: "未激活",
+                status_activated: "已激活 (充值已批准)",
+                task_lock_msg: "完成审核充值以激活您的每日 5 项任务。",
+                start_session_btn: "开始任务 (5项)",
+                loading_question: "正在加载问题...",
+                btn_validate_wait: "请等待 (15秒)...",
+                btn_validate_ready: "验证 / 下一步",
+                session_stats_title: "📊 任务统计",
+                stats_vip_level: "目标 VIP 等级：",
+                stats_total_q: "总问题数：",
+                stats_success: "✅ 成功：",
+                stats_failed: "❌ 失败：",
+                stats_earned: "💰 获得收益：",
+                next_tasks_btn: "➡️ 后续任务",
+                unlock_condition_title: "解锁下阶段任务条件：",
+                unlock_condition_desc: "👥 <b>邀请 2 人</b><br>您的 2 名下线必须注册、充值并由管理员<b>批准</b>充值。",
+                req_referrals: "所需有效下线：",
+                curr_referrals: "当前有效下线：",
+                copy_invite_link: "复制我的邀请链接",
+                referral_prog_title: "推荐计划",
+                referral_prog_desc: "邀请会员以解锁三级佣金。",
+                copy_btn: "复制",
+                lvl_1: "一级",
+                lvl_2: "二级",
+                lvl_3: "三级",
+                team_history_title: "📜 团队历史",
+                th_ref: "下线",
+                th_lvl: "层级",
+                th_date: "注册时间",
+                th_dep: "充值",
+                th_status: "充值状态",
+                th_rate: "比例",
+                th_comm: "佣金",
+                th_comm_date: "佣金日期",
+                th_comm_status: "佣金状态",
+                loading_history: "加载历史记录...",
+                loading_text: "加载中...",
+                sep_comm_bal: "独立佣金余额",
+                comm_fee_info: "手续费：10% | 最低提现：5 USDT (未激活用户)",
+                comm_withdraw_btn: "💰 提取佣金",
+                comm_withdraw_hist: "佣金提现历史",
+                user_label: "用户",
+                my_deposits_history: "我的充值历史",
+                th_vip: "VIP",
+                th_amount: "金额",
+                company_history_title: "公司历史",
+                company_history_desc: "Infinity Capital 成立于 2021 年，已成为数字资产管理和去中心化金融市场简化领域的领先平台。",
+                company_operation_title: "平台运作方式",
+                op_rule_1: "<b>VIP 系统：</b>选择投资计划以解锁成比例的每日收入。",
+                op_rule_2: "<b>每日任务：</b>每天回答 5 道选择题以验证并领取您的收益。",
+                op_rule_3: "<b>推荐计划：</b>邀请好友并在 3 个层级上赚取直接佣金（最高 32%）。",
+                logout_btn: "登出",
+                choose_vip_plan: "选择 VIP 计划",
+                choose_vip_desc: "点击您偏好计划上的“投资”以查看充值详情。",
+                back_to_vip: "返回 VIP 列表",
+                pay_method: "支付方式",
+                dep_address: "充值地址",
+                amount_usdt: "金额 (USDT)",
+                proof_payment_label: "付款证明 (截图/照片)",
+                confirm_dep_btn: "确认并提交充值",
+                withdraw_req_title: "提现申请",
+                rcv_address: "USDT 收款地址",
+                withdraw_amount: "提现金额 (USDT)",
+                withdraw_fees: "提现手续费",
+                net_receive: "实际到账：",
+                validate_withdraw_btn: "确认提现",
+                nav_home: "首页",
+                nav_tasks: "任务",
+                nav_team: "团队",
+                nav_profile: "我的",
+                plan_price: "计划价格",
+                daily_revenue: "每日收益 (5题)",
+                est_return: "预计回报",
+                subscribe: "投资",
+                days_label: "365天"
+            },
+            ar: {
+                auth_title_login: "تسجيل الدخول",
+                auth_subtitle_login: "الوصول إلى مساحة الاستثمار الآمنة الخاصة بك",
+                auth_title_reg: "إنشاء حساب",
+                auth_subtitle_reg: "أنشئ حساباً وابدأ في توليد الأرباح",
+                tab_login: "دخول",
+                tab_register: "تسجيل",
+                label_phone: "الدولة ورقم الهاتف",
+                label_password: "كلمة المرور",
+                label_refcode: "رمز الإحالة",
+                ref_detected: "تم اكتشاف رابط الإحالة وتطبيقه!",
+                btn_login_submit: "تسجيل الدخول",
+                btn_reg_submit: "إنشاء حساب",
+                total_balance_title: "إجمالي الرصيد المتاح (USDT)",
+                task_revenues: "أرباح مهام VIP",
+                commissions_balance: "رصيد العمولات",
+                deposit: "إيداع",
+                withdraw: "سحب",
+                team: "الفريق",
+                support: "الدعم",
+                vip_levels_title: "مستويات استثمار VIP (1 - 10)",
+                tasks_center_title: "مركز مهام VIP",
+                tasks_center_desc: "أجب عن الأسئلة الـ 5 اليومية المخصصة لمستوى VIP الخاص بك لتحصيل أرباحك.",
+                active_vip: "VIP النشط",
+                account_status: "حالة الحساب",
+                status_not_activated: "غير مفعل",
+                status_activated: "مفعل (إيداع معتمد)",
+                task_lock_msg: "قم بإجراء إيداع معتمد لتنشيط مهامك الـ 5 اليومية.",
+                start_session_btn: "بدء الجلسة (5 مهام)",
+                loading_question: "جاري تحميل السؤال...",
+                btn_validate_wait: "يرجى الانتظار (15 ثانية)...",
+                btn_validate_ready: "تحقق / الانتقال للخطوة التالية",
+                session_stats_title: "📊 إحصائيات الجلسة",
+                stats_vip_level: "مستوى VIP المستهدف:",
+                stats_total_q: "إجمالي الأسئلة:",
+                stats_success: "✅ الناجحة:",
+                stats_failed: "❌ الفاشلة:",
+                stats_earned: "💰 الربح المحقق:",
+                next_tasks_btn: "➡️ المهام التالية",
+                unlock_condition_title: "شرط فتح المهام التالية:",
+                unlock_condition_desc: "👥 <b>دعوة شخصين</b><br>يجب على إحالاتك الاثنين التسجيل وإجراء إيداع والموافقة على إيداعهم من قبل المشرف.",
+                req_referrals: "الإحالات المعتمدة المطلوبة:",
+                curr_referrals: "الإحالات المعتمدة الحالية:",
+                copy_invite_link: "نسخ رابط الدعوة الخاص بي",
+                referral_prog_title: "برنامج الإحالة",
+                referral_prog_desc: "قم بدعوة الأعضاء لفتح عمولاتك على 3 مستويات.",
+                copy_btn: "نسخ",
+                lvl_1: "المستوى 1",
+                lvl_2: "المستوى 2",
+                lvl_3: "المستوى 3",
+                team_history_title: "📜 تاريخ الفريق",
+                th_ref: "الإحالة",
+                th_lvl: "المستوى",
+                th_date: "تاريخ التسجيل",
+                th_dep: "الإيداع",
+                th_status: "حالة الإيداع",
+                th_rate: "النسبة",
+                th_comm: "العمولة",
+                th_comm_date: "تاريخ العمولة",
+                th_comm_status: "حالة العمولة",
+                loading_history: "جاري تحميل السجل...",
+                loading_text: "جاري التحميل...",
+                sep_comm_bal: "رصيد العمولات المنفصل",
+                comm_fee_info: "الرسوم: 10% | الحد الأدنى للسحب: 5 USDT (للمستخدمين غير المفعّلين)",
+                comm_withdraw_btn: "💰 سحب العمولات",
+                comm_withdraw_hist: "سجل سحب العمولات",
+                user_label: "المستخدم",
+                my_deposits_history: "سجل إيداعاتي",
+                th_vip: "VIP",
+                th_amount: "المبلغ",
+                company_history_title: "تاريخ الشركة",
+                company_history_desc: "تأسست شركة Infinity Capital في عام 2021، وأثبتت نفسها كمنصة رائدة في إدارة الأصول الرقمية وتبسيط أسواق المالية اللامركزية.",
+                company_operation_title: "آلية عمل المنصة",
+                op_rule_1: "<b>نظام VIP:</b> اختر خطة استثمار لفتح دخل يومي تناسبي.",
+                op_rule_2: "<b>المهام اليومية:</b> أجب كل يوم عن 5 أسئلة متعددة الخيارات للتحقق من عائدك واستلامه.",
+                op_rule_3: "<b>برنامج الإحالة:</b> ادع أصدقاءك واكسب عمولات مباشرة عبر 3 مستويات (تصل إلى 32%).",
+                logout_btn: "تسجيل الخروج",
+                choose_vip_plan: "اختر خطة VIP",
+                choose_vip_desc: "انقر فوق 'استثمار' على الخطة المفضلة لديك لعرض تفاصيل الإيداع.",
+                back_to_vip: "العودة إلى VIP",
+                pay_method: "طريقة الدفع",
+                dep_address: "عنوان الإيداع",
+                amount_usdt: "المبلغ (USDT)",
+                proof_payment_label: "إثبات الدفع (لقطة شاشة / صورة)",
+                confirm_dep_btn: "تأكيد وإرسال الإيداع",
+                withdraw_req_title: "طلب السحب",
+                rcv_address: "عنوان استقبال USDT",
+                withdraw_amount: "المبلغ المراد سحبه (USDT)",
+                withdraw_fees: "رسوم السحب",
+                net_receive: "صافي المستلم:",
+                validate_withdraw_btn: "تأكيد السحب",
+                nav_home: "الرئيسية",
+                nav_tasks: "المهام",
+                nav_team: "الفريق",
+                nav_profile: "حسابي",
+                plan_price: "سعر الخطة",
+                daily_revenue: "العائد اليومي (5 أسئلة)",
+                est_return: "العائد المقدر",
+                subscribe: "استثمار",
+                days_label: "365 يوماً"
+            }
+        };
+
+        let currentLang = 'fr';
+        let selectedVipLevelForDeposit = 1;
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18nTranslations[lang] && i18nTranslations[lang][key]) {
+                    el.innerHTML = i18nTranslations[lang][key];
+                }
+            });
+
+            renderVIPs();
+            renderRechargeVipSelection();
+            updateTasksUI();
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCcHdh4w-HggtFN6d4E0nIGdb-t2s0MYe4",
+            authDomain: "liberty-30448.firebaseapp.com",
+            projectId: "liberty-30448",
+            storageBucket: "liberty-30448.firebasestorage.app",
+            messagingSenderId: "956690521542",
+            appId: "1:956690521542:web:78c706c76e5bbec0d4e6c7"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        const vipQuestionsDatabase = {
+            1: {
+                fr: [
+                    { q: "Quelle est la devise de base utilisée sur Infinity Capital ?", opts: ["BTC", "USDT", "ETH", "SOL"], ans: 1 },
+                    { q: "Quel est le délai maximum pour une transaction Tron TRC20 ?", opts: ["1 heure", "Quelques secondes", "24 heures", "3 jours"], ans: 1 },
+                    { q: "Combien de tâches contient une session quotidienne VIP 1 ?", opts: ["3", "5", "10", "15"], ans: 1 },
+                    { q: "Quel est le pourcentage d'un dépôt d'un filleul Niveau 1 pour parrain non activé ?", opts: ["5%", "10%", "20%", "32%"], ans: 2 },
+                    { q: "Combien de secondes obligatoires doit-on attendre sur chaque question ?", opts: ["5 sec", "10 sec", "15 sec", "30 sec"], ans: 2 }
+                ],
+                en: [
+                    { q: "What is the base currency used on Infinity Capital?", opts: ["BTC", "USDT", "ETH", "SOL"], ans: 1 },
+                    { q: "What is the maximum delay for a Tron TRC20 transaction?", opts: ["1 hour", "A few seconds", "24 hours", "3 days"], ans: 1 },
+                    { q: "How many tasks does a VIP 1 daily session contain?", opts: ["3", "5", "10", "15"], ans: 1 },
+                    { q: "What is the Level 1 referral deposit percentage for an inactive sponsor?", opts: ["5%", "10%", "20%", "32%"], ans: 2 },
+                    { q: "How many mandatory seconds must be waited on each question?", opts: ["5 sec", "10 sec", "15 sec", "30 sec"], ans: 2 }
+                ],
+                es: [
+                    { q: "¿Cuál es la moneda base utilizada en Infinity Capital?", opts: ["BTC", "USDT", "ETH", "SOL"], ans: 1 },
+                    { q: "¿Cuál es el tiempo máximo para una transacción Tron TRC20?", opts: ["1 hora", "Unos segundos", "24 horas", "3 días"], ans: 1 },
+                    { q: "¿Cuántas tareas contiene una sesión diaria VIP 1?", opts: ["3", "5", "10", "15"], ans: 1 },
+                    { q: "¿Cuál es el porcentaje de depósito de un referido de Nivel 1 para un patrocinador inactivo?", opts: ["5%", "10%", "20%", "32%"], ans: 2 },
+                    { q: "¿Cuántos segundos obligatorios se deben esperar en cada pregunta?", opts: ["5 seg", "10 seg", "15 seg", "30 seg"], ans: 2 }
+                ],
+                zh: [
+                    { q: "Infinity Capital 上使用的基础货币是什么？", opts: ["BTC", "USDT", "ETH", "SOL"], ans: 1 },
+                    { q: "Tron TRC20 交易的最大延迟是多少？", opts: ["1小时", "几秒钟", "24小时", "3天"], ans: 1 },
+                    { q: "VIP 1 每日任务包含多少个任务？", opts: ["3", "5", "10", "15"], ans: 1 },
+                    { q: "对于未激活的推荐人，一级下线充值的比例是多少？", opts: ["5%", "10%", "20%", "32%"], ans: 2 },
+                    { q: "每道题必须等待多少秒？", opts: ["5秒", "10秒", "15秒", "30秒"], ans: 2 }
+                ],
+                ar: [
+                    { q: "ما هي العملة الأساسية المستخدمة في Infinity Capital؟", opts: ["BTC", "USDT", "ETH", "SOL"], ans: 1 },
+                    { q: "ما هو الحد الأقصى للتأخير لمعاملة Tron TRC20؟", opts: ["ساعة واحدة", "بضع ثوانٍ", "24 ساعة", "3 أيام"], ans: 1 },
+                    { q: "كم عدد المهام التي تحتوي عليها جلسة VIP 1 اليومية؟", opts: ["3", "5", "10", "15"], ans: 1 },
+                    { q: "ما هي نسبة إيداع إحالة المستوى 1 للمكفول غير المفعّل؟", opts: ["5%", "10%", "20%", "32%"], ans: 2 },
+                    { q: "كم عدد الثواني الإجبارية التي يجب انتظارها في كل سؤال؟", opts: ["5 ثوانٍ", "10 ثوانٍ", "15 ثانية", "30 ثانية"], ans: 2 }
+                ]
+            }
+        };
+
+        for(let i=2; i<=10; i++) {
+            vipQuestionsDatabase[i] = {
+                fr: [
+                    { q: `Quel est le capital d'investissement requis pour le plan VIP ${i} ?`, opts: [`${i*15} USDT`, `${i*100} USDT`, `${i*300} USDT`, `${i*1000} USDT`], ans: 1 },
+                    { q: `Quel est le rendement quotidien approximatif du VIP ${i} ?`, opts: [`${i*1.8} USDT`, `${i*12.5} USDT`, `${i*39} USDT`, `${i*140} USDT`], ans: 1 },
+                    { q: `Combien de tâches le VIP ${i} doit-il exécuter par jour ?`, opts: ["2", "4", "5", "8"], ans: 2 },
+                    { q: "Le délai obligatoire par question est-il contrôlé côté serveur ?", opts: ["Non", "Oui, strictement", "Parfois", "Seulement en local"], ans: 1 },
+                    { q: "Un utilisateur peut-il valider une tâche deux fois ?", opts: ["Oui", "Non, interdit par le serveur", "Seulement le soir", "Illimité"], ans: 1 }
+                ],
+                en: [
+                    { q: `What is the required investment capital for the VIP ${i} plan?`, opts: [`${i*15} USDT`, `${i*100} USDT`, `${i*300} USDT`, `${i*1000} USDT`], ans: 1 },
+                    { q: `What is the approximate daily return of VIP ${i}?`, opts: [`${i*1.8} USDT`, `${i*12.5} USDT`, `${i*39} USDT`, `${i*140} USDT`], ans: 1 },
+                    { q: `How many tasks must VIP ${i} execute per day?`, opts: ["2", "4", "5", "8"], ans: 2 },
+                    { q: "Is the mandatory delay per question controlled server-side?", opts: ["No", "Yes, strictly", "Sometimes", "Only locally"], ans: 1 },
+                    { q: "Can a user validate a task twice?", opts: ["Yes", "No, blocked by server", "Only at night", "Unlimited"], ans: 1 }
+                ],
+                es: [
+                    { q: `¿Cuál es el capital de inversión requerido para el plan VIP ${i}?`, opts: [`${i*15} USDT`, `${i*100} USDT`, `${i*300} USDT`, `${i*1000} USDT`], ans: 1 },
+                    { q: `¿Cuál es el rendimiento diario aproximado de VIP ${i}?`, opts: [`${i*1.8} USDT`, `${i*12.5} USDT`, `${i*39} USDT`, `${i*140} USDT`], ans: 1 },
+                    { q: `¿Cuántas tareas debe ejecutar el VIP ${i} por día?`, opts: ["2", "4", "5", "8"], ans: 2 },
+                    { q: "¿Se controla el tiempo obligatorio por pregunta en el servidor?", opts: ["No", "Sí, estrictamente", "A veces", "Solo localmente"], ans: 1 },
+                    { q: "¿Puede un usuario validar una tarea dos veces?", opts: ["Sí", "No, prohibido por el servidor", "Solo de noche", "Ilimitado"], ans: 1 }
+                ],
+                zh: [
+                    { q: `VIP ${i} 计划所需的投资资本是多少？`, opts: [`${i*15} USDT`, `${i*100} USDT`, `${i*300} USDT`, `${i*1000} USDT`], ans: 1 },
+                    { q: `VIP ${i} 的大约每日收益是多少？`, opts: [`${i*1.8} USDT`, `${i*12.5} USDT`, `${i*39} USDT`, `${i*140} USDT`], ans: 1 },
+                    { q: `VIP ${i} 每天必须执行多少个任务？`, opts: ["2", "4", "5", "8"], ans: 2 },
+                    { q: "每道题的强制延迟是否由服务器端控制？", opts: ["否", "是，严格控制", "有时", "仅本地"], ans: 1 },
+                    { q: "用户可以验证两次任务吗？", opts: ["可以", "不行，服务器禁止", "仅晚上", "无限"], ans: 1 }
+                ],
+                ar: [
+                    { q: `ما هو رأس المال الاستثماري المطلوب لخطة VIP ${i}؟`, opts: [`${i*15} USDT`, `${i*100} USDT`, `${i*300} USDT`, `${i*1000} USDT`], ans: 1 },
+                    { q: `ما هو العائد اليومي التقريبي لـ VIP ${i}؟`, opts: [`${i*1.8} USDT`, `${i*12.5} USDT`, `${i*39} USDT`, `${i*140} USDT`], ans: 1 },
+                    { q: `كم عدد المهام التي يجب على VIP ${i} تنفيذها يومياً؟`, opts: ["2", "4", "5", "8"], ans: 2 },
+                    { q: "هل يتم التحكم في التأخير الإجباري لكل سؤال من جهة الخادم؟", opts: ["لا", "نعم، بصرامة", "أحياناً", "محلياً فقط"], ans: 1 },
+                    { q: "هل يمكن للمستخدم التحقق من المهمة مرتين؟", opts: ["نعم", "لا، يمنعها الخادم", "ليلاً فقط", "غير محدود"], ans: 1 }
+                ]
+            };
+        }
+
+        let currentUser = null;
+        let userDocData = null;
+        let authMode = 'login'; 
+
+        let state = {
+            userVip: 0,
+            isActivated: false,
+            taskRevenues: 0.00,
+            commissions: 0.00,
+            
+            quizCurrentIndex: 0,
+            quizTimerInterval: null,
+            quizTimerSeconds: 15,
+            quizSuccessCount: 0,
+            quizFailCount: 0,
+            quizAnswers: []
+        };
+
+        const vipData = [
+            { level: 1, price: 15, daily: 1.80, tasks: 5, icon: '₮' },
+            { level: 2, price: 100, daily: 12.50, tasks: 5, icon: '₮' },
+            { level: 3, price: 300, daily: 39.00, tasks: 5, icon: '₮' },
+            { level: 4, price: 1000, daily: 140.00, tasks: 5, icon: '💎' },
+            { level: 5, price: 3000, daily: 450.00, tasks: 5, icon: '💎' },
+            { level: 6, price: 10000, daily: 1700.00, tasks: 5, icon: '💎' },
+            { level: 7, price: 30000, daily: 6000.00, tasks: 5, icon: '🚀' },
+            { level: 8, price: 100000, daily: 25000.00, tasks: 5, icon: '🚀' },
+            { level: 9, price: 300000, daily: 96000.00, tasks: 5, icon: '🔥' },
+            { level: 10, price: 999999, daily: 499999.50, tasks: 5, icon: '👑' }
+        ];
+
+        window.onload = function() {
+            detectReferralCode();
+            renderRechargeVipSelection();
+            
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('view-auth').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    document.getElementById('appNav').classList.remove('hidden');
+
+                    document.getElementById('profileEmail').innerText = user.email || `Membre #${user.uid.substring(0, 6)}`;
+                    listenToUserData(user.uid);
+                    listenToTeamHistory(user.uid);
+                    listenToCommissionWithdrawals(user.uid);
+                    listenToUserDeposits(user.uid);
+                } else {
+                    currentUser = null;
+                    document.getElementById('view-auth').classList.remove('hidden');
+                    document.getElementById('app').classList.add('hidden');
+                    document.getElementById('appNav').classList.add('hidden');
+                }
+            });
+            renderVIPs();
+            updateDepositAddress();
+        };
+
+        function renderRechargeVipSelection() {
+            const container = document.getElementById('vipSelectionContainer');
+            const lang = currentLang;
+            const dict = i18nTranslations[lang] || i18nTranslations['fr'];
+
+            container.innerHTML = vipData.map(vip => {
+                const estimatedReturn = (vip.daily * 365).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+                const priceFormatted = vip.price.toLocaleString('fr-FR');
+                const dailyFormatted = vip.daily.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                return `
+                    <div class="card-gradient border border-slate-800 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">${vip.icon}</span>
+                                <span class="font-extrabold text-white text-base">VIP ${vip.level}</span>
+                            </div>
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">${dict.days_label}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-slate-950/60 p-2 rounded border border-slate-800/80">
+                                <div class="text-slate-400 text-[10px]">${dict.plan_price}</div>
+                                <div class="text-white font-bold">${priceFormatted} USDT</div>
+                            </div>
+                            <div class="bg-slate-950/60 p-2 rounded border border-slate-800/80">
+                                <div class="text-slate-400 text-[10px]">${dict.daily_revenue}</div>
+                                <div class="text-yellow-400 font-bold">${dailyFormatted} USDT</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                            <div>
+                                <div class="text-[10px] text-slate-400">${dict.est_return}</div>
+                                <div class="text-xs font-extrabold text-green-400">${estimatedReturn} USDT</div>
+                            </div>
+                            <button onclick="proceedToPayment(${vip.level})" class="gold-gradient text-slate-900 px-4 py-2 rounded-lg font-bold text-xs shadow transition">
+                                ${dict.subscribe}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function proceedToPayment(level) {
+            selectedVipLevelForDeposit = level;
+            const targetVip = vipData.find(v => v.level === level);
+            
+            document.getElementById('selectedVipBadgeHeader').innerText = `VIP ${level} (${targetVip.price} USDT)`;
+            document.getElementById('depAmount').value = targetVip.price;
+            
+            document.getElementById('rechargeStepPlans').classList.add('hidden');
+            document.getElementById('rechargeStepPayment').classList.remove('hidden');
+        }
+
+        function backToVipSelection() {
+            document.getElementById('rechargeStepPayment').classList.add('hidden');
+            document.getElementById('rechargeStepPlans').classList.remove('hidden');
+        }
+
+        function detectReferralCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let refCode = urlParams.get('ref');
+            
+            if (!refCode && window.location.hash.includes('ref=')) {
+                refCode = window.location.hash.split('ref=')[1];
+            }
+
+            if (refCode) {
+                const refInput = document.getElementById('authReferralCode');
+                refInput.value = refCode;
+                refInput.readOnly = true;
+                document.getElementById('autoRefNotice').classList.remove('hidden');
+                toggleAuthMode('register');
+            }
+        }
+
+        function toggleAuthMode(mode) {
+            authMode = mode;
+            const title = document.getElementById('authTitle');
+            const sub = document.getElementById('authSubtitle');
+            const btn = document.getElementById('authSubmitBtn');
+            const refBox = document.getElementById('referralFieldBox');
+            const tabLogin = document.getElementById('tabLoginBtn');
+            const tabReg = document.getElementById('tabRegisterBtn');
+
+            const dict = i18nTranslations[currentLang] || i18nTranslations['fr'];
+
+            if (mode === 'login') {
+                title.innerText = dict.auth_title_login;
+                sub.innerText = dict.auth_subtitle_login;
+                btn.innerText = dict.btn_login_submit;
+                refBox.classList.add('hidden');
+                tabLogin.className = "py-2.5 rounded-lg bg-yellow-500 text-slate-950 transition font-bold";
+                tabReg.className = "py-2.5 rounded-lg text-slate-400 hover:text-white transition";
+            } else {
+                title.innerText = dict.auth_title_reg;
+                sub.innerText = dict.auth_subtitle_reg;
+                btn.innerText = dict.btn_reg_submit;
+                refBox.classList.remove('hidden');
+                tabReg.className = "py-2.5 rounded-lg bg-yellow-500 text-slate-950 transition font-bold";
+                tabLogin.className = "py-2.5 rounded-lg text-slate-400 hover:text-white transition";
+            }
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const countryCode = document.getElementById('countryCodeSelect').value;
+            const phoneRaw = document.getElementById('authPhone').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const rawRefCode = document.getElementById('authReferralCode').value.trim();
+
+            if (!phoneRaw || !password) {
+                showNotification("Veuillez remplir tous les champs obligatoires.", "error");
+                return;
+            }
+
+            const fullPhone = `${countryCode}${phoneRaw}`.replace('+', '');
+            const phoneEmail = `${fullPhone}@infinity.app`;
+
+            try {
+                if (authMode === 'login') {
+                    await firebase.auth().signInWithEmailAndPassword(phoneEmail, password);
+                } else {
+                    const phoneQuery = await db.collection("users").where("phone", "==", `+${fullPhone}`).get();
+                    if (!phoneQuery.empty) {
+                        showNotification("Ce numéro est déjà utilisé. Veuillez vous connecter.", "error");
+                        toggleAuthMode('login');
+                        return;
+                    }
+
+                    const cred = await firebase.auth().createUserWithEmailAndPassword(phoneEmail, password);
+                    const uid = cred.user.uid;
+
+                    // Le client crée uniquement le profil de base.
+                    // L'attribution du parrain et la construction des niveaux 1/2/3
+                    // sont faites côté serveur par la fonction registerReferral.
+                    await db.collection("users").doc(uid).set({
+                        uid: uid,
+                        phone: `+${fullPhone}`,
+                        countryCode: countryCode,
+                        isActivated: false,
+                        referrerId: null,
+                        referralStatus: rawRefCode ? 'pending_server_validation' : 'none',
+                        taskRevenues: 0,
+                        commissionBalance: 0,
+                        vipLevel: 0,
+                        lastTaskDate: null,
+                        taskUnlockedForToday: true,
+                        validatedReferralsCount: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    if (rawRefCode) {
+                        try {
+                            const registerReferral = firebase.functions().httpsCallable('registerReferral');
+                            await registerReferral({ referralCode: rawRefCode });
+                            showNotification("Inscription réussie. Parrainage enregistré automatiquement.", "success");
+                        } catch (refErr) {
+                            console.error("Validation du parrainage côté serveur:", refErr);
+                            showNotification("Compte créé. Le lien de parrainage est en cours de validation.", "info");
+                        }
+                    } else {
+                        showNotification("Compte créé avec succès !", "success");
+                    }
+
+                }
+            } catch (err) {
+                showNotification("Erreur d'authentification : " + err.message, "error");
+            }
+        }
+
+        function listenToUserData(uid) {
+            db.collection("users").doc(uid).onSnapshot(doc => {
+                if (!doc.exists) return;
+
+                userDocData = doc.data();
+                
+                state.userVip = userDocData.vipLevel || 0;
+                state.isActivated = !!userDocData.isActivated;
+                state.taskRevenues = userDocData.taskRevenues || 0;
+                state.commissions = userDocData.commissionBalance || 0;
+                
+                document.getElementById('refCodeDisplay').innerText = `INF-${uid.substring(0,6).toUpperCase()}`;
+                
+                updateReferralRatesUI(state.isActivated);
+                updateTasksUI();
+                updateWithdrawalRulesUI();
+                updateUI();
+                renderVIPs();
+            });
+        }
+
+        function updateReferralRatesUI(isActivated) {
+            const refBadge = document.getElementById('refStatusBadge');
+            const refSub = document.getElementById('refSubtitle');
+
+            if (isActivated) {
+                document.getElementById('lvl1Rate').innerText = '32%';
+                document.getElementById('lvl2Rate').innerText = '5%';
+                document.getElementById('lvl3Rate').innerText = '1%';
+                refSub.innerText = "Vos commissions sont actuellement maximisées (32% / 5% / 1%).";
+                refBadge.className = "p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-center text-xs text-green-400 font-medium";
+                refBadge.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> Compte Activé (Taux VIP : 32% - 5% - 1%)';
+            } else {
+                document.getElementById('lvl1Rate').innerText = '20%';
+                document.getElementById('lvl2Rate').innerText = '3%';
+                document.getElementById('lvl3Rate').innerText = '1%';
+                refSub.innerText = "Effectuez un dépôt approuvé pour passer aux taux premium (32% / 5% / 1%).";
+                refBadge.className = "p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-center text-xs text-yellow-400 font-medium";
+                refBadge.innerHTML = '<i class="fa-solid fa-clock mr-1"></i> Compte Non Activé (Taux Standard : 20% - 3% - 1%)';
+            }
+        }
+
+        function updateTasksUI() {
+            document.getElementById('taskCurrentVipText').innerText = `VIP ${state.userVip}`;
+            const statusLabel = document.getElementById('taskAccountStatusText');
+            const lockMsg = document.getElementById('taskLockMessage');
+            const startBtn = document.getElementById('startTasksBtn');
+            const dict = i18nTranslations[currentLang] || i18nTranslations['fr'];
+
+            if (state.isActivated) {
+                statusLabel.innerText = dict.status_activated;
+                statusLabel.className = "text-green-400 font-bold";
+            } else {
+                statusLabel.innerText = dict.status_not_activated;
+                statusLabel.className = "text-red-400 font-bold";
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const hasCompletedToday = userDocData ? userDocData.lastTaskDate === todayStr : false;
+
+            if (!state.isActivated || state.userVip === 0) {
+                lockMsg.innerText = dict.task_lock_msg;
+                lockMsg.className = "p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-400";
+                startBtn.disabled = true;
+            } else if (hasCompletedToday && !(userDocData && userDocData.taskUnlockedForToday)) {
+                lockMsg.innerText = "🔒 Vos 5 tâches d'aujourd'hui sont terminées. Remplissez la condition ci-dessous pour débloquer les tâches du jour suivant.";
+                lockMsg.className = "p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-400";
+                startBtn.disabled = true;
+            } else {
+                lockMsg.innerText = `✅ Vos 5 tâches quotidiennes du VIP ${state.userVip} sont prêtes !`;
+                lockMsg.className = "p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-xs text-green-400";
+                startBtn.disabled = false;
+            }
+
+            const unlockBox = document.getElementById('taskUnlockConditionBox');
+            if (hasCompletedToday && !(userDocData && userDocData.taskUnlockedForToday)) {
+                unlockBox.classList.remove('hidden');
+                document.getElementById('unlockReferralsCount').innerText = `${userDocData ? userDocData.validatedReferralsCount || 0 : 0} / 2`;
+            } else {
+                unlockBox.classList.add('hidden');
+            }
+        }
+
+        function startTaskSession() {
+            if (!state.isActivated || state.userVip === 0) {
+                showNotification("Compte non activé par dépôt ou VIP non défini.", "error");
+                return;
+            }
+            
+            state.quizCurrentIndex = 0;
+            state.quizSuccessCount = 0;
+            state.quizFailCount = 0;
+            state.quizAnswers = [];
+
+            document.getElementById('taskStateIntro').classList.add('hidden');
+            document.getElementById('taskQuizBox').classList.remove('hidden');
+            document.getElementById('taskStatsBox').classList.add('hidden');
+
+            renderQuizQuestion();
+        }
+
+        let selectedOptionIndex = null;
+
+        function renderQuizQuestion() {
+            clearInterval(state.quizTimerInterval);
+            selectedOptionIndex = null;
+
+            const vipSet = vipQuestionsDatabase[state.userVip] || vipQuestionsDatabase[1];
+            const langSet = vipSet[currentLang] || vipSet['fr'];
+            const currentQ = langSet[state.quizCurrentIndex];
+
+            document.getElementById('quizProgressText').innerText = `Question ${state.quizCurrentIndex + 1} / 5 (VIP ${state.userVip})`;
+            document.getElementById('quizQuestionText').innerText = currentQ.q;
+
+            const optsContainer = document.getElementById('quizOptionsContainer');
+            optsContainer.innerHTML = currentQ.opts.map((opt, idx) => `
+                <button onclick="selectOption(${idx})" id="opt-btn-${idx}" class="w-full text-left bg-slate-950 hover:bg-slate-800 border border-slate-800 p-3 rounded-xl text-xs text-slate-200 font-medium transition flex items-center justify-between">
+                    <span>${opt}</span>
+                    <i class="fa-regular fa-circle text-slate-600"></i>
+                </button>
+            `).join('');
+
+            // Décompte strict de 15s : à la fin des 15s, validation automatique (se termine directement)
+            state.quizTimerSeconds = 15;
+            const nextBtn = document.getElementById('quizNextBtn');
+            nextBtn.disabled = true;
+            nextBtn.innerText = `Veuillez patienter (${state.quizTimerSeconds}s)...`;
+
+            state.quizTimerInterval = setInterval(() => {
+                state.quizTimerSeconds -= 1;
+                document.getElementById('quizTimer').innerText = `${state.quizTimerSeconds}s`;
+
+                if (state.quizTimerSeconds > 0) {
+                    nextBtn.innerText = `Veuillez patienter (${state.quizTimerSeconds}s)...`;
+                } else {
+                    clearInterval(state.quizTimerInterval);
+                    document.getElementById('quizTimer').innerText = "0s";
+                    nextBtn.disabled = false;
+                    nextBtn.innerText = "Valider / Passer à l'étape suivante";
+                    
+                    // Action automatique dès que les 15s se terminent directement
+                    proceedNextQuizQuestion();
+                }
+            }, 1000);
+        }
+
+        function selectOption(idx) {
+            selectedOptionIndex = idx;
+            const vipSet = vipQuestionsDatabase[state.userVip] || vipQuestionsDatabase[1];
+            const langSet = vipSet[currentLang] || vipSet['fr'];
+            const currentQ = langSet[state.quizCurrentIndex];
+
+            currentQ.opts.forEach((_, i) => {
+                const btn = document.getElementById(`opt-btn-${i}`);
+                if (btn) {
+                    if (i === idx) {
+                        btn.className = "w-full text-left bg-yellow-500/20 border border-yellow-500 p-3 rounded-xl text-xs text-yellow-300 font-bold transition flex items-center justify-between";
+                    } else {
+                        btn.className = "w-full text-left bg-slate-950 hover:bg-slate-800 border border-slate-800 p-3 rounded-xl text-xs text-slate-200 font-medium transition flex items-center justify-between";
+                    }
+                }
+            });
+        }
+
+        function proceedNextQuizQuestion() {
+            if (state.quizTimerSeconds > 0) {
+                showNotification("Veuillez attendre la fin du délai obligatoire de 15 secondes.", "error");
+                return;
+            }
+
+            // Si aucune option n'est sélectionnée à la fin des 15s, on sélectionne par défaut la première option (index 0) pour valider directement la tâche.
+            if (selectedOptionIndex === null) {
+                selectedOptionIndex = 0;
+            }
+
+            const vipSet = vipQuestionsDatabase[state.userVip] || vipQuestionsDatabase[1];
+            const langSet = vipSet[currentLang] || vipSet['fr'];
+            const currentQ = langSet[state.quizCurrentIndex];
+
+            const isCorrect = selectedOptionIndex === currentQ.ans;
+            if (isCorrect) {
+                state.quizSuccessCount += 1;
+            } else {
+                state.quizFailCount += 1;
+            }
+
+            state.quizAnswers.push(isCorrect);
+            state.quizCurrentIndex += 1;
+
+            if (state.quizCurrentIndex < 5) {
+                renderQuizQuestion();
+            } else {
+                finishQuizSession();
+            }
+        }
+
+        async function finishQuizSession() {
+            document.getElementById('taskQuizBox').classList.add('hidden');
+            document.getElementById('taskStatsBox').classList.remove('hidden');
+
+            const vipObj = vipData.find(v => v.level === state.userVip);
+            const rewardPerQuestion = vipObj ? (vipObj.daily / 5) : 0;
+            const totalGainSession = state.quizSuccessCount * rewardPerQuestion;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            try {
+                const batch = db.batch();
+                const userRef = db.collection("users").doc(currentUser.uid);
+
+                batch.update(userRef, {
+                    taskRevenues: firebase.firestore.FieldValue.increment(totalGainSession),
+                    lastTaskDate: todayStr,
+                    taskUnlockedForToday: false,
+                    validatedReferralsCount: 0
+                });
+
+                const taskLogRef = db.collection("task_logs").doc();
+                batch.set(taskLogRef, {
+                    userId: currentUser.uid,
+                    vipLevel: state.userVip,
+                    totalQuestions: 5,
+                    successCount: state.quizSuccessCount,
+                    failCount: state.quizFailCount,
+                    gainAmount: totalGainSession,
+                    date: todayStr,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await batch.commit();
+                showNotification("Session de tâches terminée avec succès !", "success");
+            } catch (err) {
+                console.error("Erreur d'enregistrement Firebase:", err);
+            }
+
+            document.getElementById('statsDateText').innerText = `Date : ${new Date().toLocaleDateString('fr-FR')}`;
+            document.getElementById('statsVipText').innerText = `VIP ${state.userVip}`;
+            document.getElementById('statsSuccessText').innerText = `${state.quizSuccessCount}`;
+            document.getElementById('statsFailText').innerText = `${state.quizFailCount}`;
+            document.getElementById('statsGainText').innerText = `${totalGainSession.toFixed(2)} USDT`;
+        }
+
+        function handleNextTasksClick() {
+            showNotification("Revenez demain pour effectuer les prochaines tâches.", "info");
+            document.getElementById('taskStatsBox').classList.add('hidden');
+            document.getElementById('taskStateIntro').classList.remove('hidden');
+            updateTasksUI();
+        }
+
+        function updateWithdrawalRulesUI() {
+            const ruleBox = document.getElementById('withdrawInfoRule');
+            const commBtn = document.getElementById('commWithdrawBtn');
+            const feeRateText = document.getElementById('withdrawFeeRateText');
+
+            if (state.isActivated) {
+                feeRateText.innerText = "7%";
+                ruleBox.innerHTML = `
+                    <div class="text-green-400 font-bold"><i class="fa-solid fa-user-check mr-1"></i> Compte Activé</div>
+                    <div class="text-slate-300">Vos Revenus VIP (${state.taskRevenues.toFixed(2)} USDT) et Commissions (${state.commissions.toFixed(2)} USDT) sont fusionnés.</div>
+                    <div class="text-yellow-400 font-bold pt-1">Retrait Min: 2 USDT | Frais: 7%</div>
+                `;
+                commBtn.disabled = true;
+                commBtn.innerText = "🔒 Commissions fusionnées au Solde Total";
+            } else {
+                feeRateText.innerText = "10%";
+                ruleBox.innerHTML = `
+                    <div class="text-yellow-400 font-bold"><i class="fa-solid fa-lock mr-1"></i> Compte Non Activé</div>
+                    <div class="text-slate-300">Vos revenus VIP restent à 0.00 USDT tant qu'un dépôt n'est pas approuvé.</div>
+                    <div class="text-red-400 font-bold pt-1">Retrait Commissions Uniquement (Min: 5 USDT | Frais: 10%)</div>
+                `;
+
+                if (state.commissions < 5) {
+                    commBtn.disabled = true;
+                    commBtn.innerText = `💰 Retrait Minimum 5 USDT requis (${state.commissions.toFixed(2)} USDT dispo)`;
+                } else {
+                    commBtn.disabled = false;
+                    commBtn.innerText = "💰 RETRAIT DES COMMISSIONS";
+                }
+            }
+            calculateWithdrawalFees();
+        }
+
+        function calculateWithdrawalFees() {
+            const amount = parseFloat(document.getElementById('withAmount').value) || 0;
+            const feePercent = state.isActivated ? 0.07 : 0.10;
+            
+            const fee = amount * feePercent;
+            const net = Math.max(0, amount - fee);
+
+            document.getElementById('withdrawFeeAmount').innerText = fee.toFixed(2);
+            document.getElementById('withdrawNetAmount').innerText = net.toFixed(2);
+        }
+
+        async function processWithdrawal() {
+            const amount = parseFloat(document.getElementById('withAmount').value);
+            const dest = document.getElementById('withdrawalDest').value;
+
+            const minRequired = state.isActivated ? 2 : 5;
+            const availableTotal = state.isActivated ? (state.taskRevenues + state.commissions) : 0;
+
+            if (!amount || amount < minRequired) {
+                showNotification(`Montant de retrait minimum non atteint (${minRequired} USDT requis).`, "error");
+                return;
+            }
+            if (!dest) {
+                showNotification("Veuillez saisir votre adresse de réception.", "error");
+                return;
+            }
+            if (amount > availableTotal) {
+                showNotification("Solde disponible insuffisant.", "error");
+                return;
+            }
+
+            try {
+                const batch = db.batch();
+                const userRef = db.collection("users").doc(currentUser.uid);
+
+                if (state.isActivated) {
+                    let rem = amount;
+                    let newTasksRev = state.taskRevenues;
+                    let newComms = state.commissions;
+
+                    if (newTasksRev >= rem) {
+                        newTasksRev -= rem;
+                    } else {
+                        rem -= newTasksRev;
+                        newTasksRev = 0;
+                        newComms -= rem;
+                    }
+
+                    batch.update(userRef, {
+                        taskRevenues: newTasksRev,
+                        commissionBalance: newComms
+                    });
+                }
+
+                const wRef = db.collection("withdrawals").doc();
+                batch.set(wRef, {
+                    userId: currentUser.uid,
+                    amount: amount,
+                    fee: amount * (state.isActivated ? 0.07 : 0.10),
+                    netAmount: amount * (1 - (state.isActivated ? 0.07 : 0.10)),
+                    address: dest,
+                    status: "pending",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await batch.commit();
+                document.getElementById('withAmount').value = '';
+                showNotification("Demande de retrait soumise avec succès !", "success");
+            } catch (err) {
+                showNotification("Erreur lors du retrait : " + err.message, "error");
+            }
+        }
+
+        async function requestCommissionWithdrawal() {
+            const amount = parseFloat(document.getElementById('commWithdrawAmount').value);
+            if (!amount || amount < 5) {
+                showNotification("Le montant minimum de retrait de commission est de 5 USDT.", "error");
+                return;
+            }
+            if (amount > state.commissions) {
+                showNotification("Solde de commission insuffisant.", "error");
+                return;
+            }
+
+            try {
+                const batch = db.batch();
+                const userRef = db.collection("users").doc(currentUser.uid);
+                
+                batch.update(userRef, {
+                    commissionBalance: firebase.firestore.FieldValue.increment(-amount)
+                });
+
+                const wRef = db.collection("commission_withdrawals").doc();
+                batch.set(wRef, {
+                    id: wRef.id,
+                    userId: currentUser.uid,
+                    amount: amount,
+                    fee: amount * 0.10,
+                    netAmount: amount * 0.90,
+                    status: "pending",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await batch.commit();
+                document.getElementById('commWithdrawAmount').value = '';
+                showNotification("Demande de retrait de commission transmise à l'administrateur !", "success");
+            } catch (err) {
+                showNotification("Erreur lors du retrait : " + err.message, "error");
+            }
+        }
+
+        function listenToTeamHistory(uid) {
+            db.collection("team_history")
+              .where("referrerId", "==", uid)
+              .onSnapshot(snapshot => {
+                  const tbody = document.getElementById('teamHistoryTable');
+                  if (snapshot.empty) {
+                      tbody.innerHTML = `<tr><td colspan="9" class="p-3 text-center text-slate-500">Aucun filleul enregistré dans l'équipe.</td></tr>`;
+                      return;
+                  }
+
+                  let html = '';
+                  snapshot.forEach(doc => {
+                      const data = doc.data();
+                      const dateInsc = data.joinedAt ? new Date(data.joinedAt.toDate()).toLocaleDateString('fr-FR') : '-';
+                      const dateComm = data.commissionDate ? new Date(data.commissionDate.toDate()).toLocaleString('fr-FR') : '-';
+
+                      let statusBadge = '<span class="text-slate-400">Aucun dépôt</span>';
+                      if(data.depositStatus === 'approved') statusBadge = '<span class="text-green-400 font-bold">Approuvé</span>';
+                      if(data.depositStatus === 'pending') statusBadge = '<span class="text-yellow-400">En attente</span>';
+
+                      html += `
+                          <tr class="border-b border-slate-800/50">
+                              <td class="p-2 font-mono">${String(data.referralId || "-").substring(0,5)}</td>
+                              <td class="p-2 font-bold text-yellow-400">Niveau ${data.level}</td>
+                              <td class="p-2">${dateInsc}</td>
+                              <td class="p-2 font-semibold">${data.depositAmount || 0} USDT</td>
+                              <td class="p-2">${statusBadge}</td>
+                              <td class="p-2 text-yellow-400 font-bold">${data.commissionRate ? data.commissionRate + '%' : '-'}</td>
+                              <td class="p-2 text-green-400 font-bold">${data.commissionAmount ? data.commissionAmount.toFixed(2) : '0.00'} USDT</td>
+                              <td class="p-2">${dateComm}</td>
+                              <td class="p-2 text-xs">${data.commissionStatus === 'credited' ? '✅ Créditée' : '⏳ En attente'}</td>
+                          </tr>
+                      `;
+                  });
+                  tbody.innerHTML = html;
+              });
+        }
+
+        function listenToUserDeposits(uid) {
+            db.collection("deposits")
+              .where("userId", "==", uid)
+              .onSnapshot(snapshot => {
+                  const tbody = document.getElementById('userDepositsHistoryTable');
+                  if (snapshot.empty) {
+                      tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500">Aucun dépôt effectué.</td></tr>`;
+                      return;
+                  }
+
+                  let html = '';
+                  snapshot.forEach(doc => {
+                      const d = doc.data();
+                      const dateStr = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString('fr-FR') : '-';
+                      
+                      let statusBadge = '<span class="text-yellow-400 font-bold">En cours</span>';
+                      if (d.status === 'approved') {
+                          statusBadge = '<span class="text-green-400 font-bold">Réussi</span>';
+                      } else if (d.status === 'rejected') {
+                          statusBadge = '<span class="text-red-400 font-bold">Rejeté</span>';
+                      }
+
+                      html += `
+                          <tr class="border-b border-slate-800/50">
+                              <td class="p-2 text-slate-400">${dateStr}</td>
+                              <td class="p-2 font-bold text-yellow-400">VIP ${d.vipLevel || 1}</td>
+                              <td class="p-2 font-bold text-white">${d.amount} USDT</td>
+                              <td class="p-2">${statusBadge}</td>
+                          </tr>
+                      `;
+                  });
+                  tbody.innerHTML = html;
+              });
+        }
+
+        function listenToCommissionWithdrawals(uid) {
+            db.collection("commission_withdrawals")
+              .where("userId", "==", uid)
+              .onSnapshot(snapshot => {
+                  const container = document.getElementById('commWithdrawalsHistory');
+                  if (snapshot.empty) {
+                      container.innerHTML = `<div class="text-slate-500 text-center py-1">Aucun historique</div>`;
+                      return;
+                  }
+                  let html = '';
+                  snapshot.forEach(doc => {
+                      const d = doc.data();
+                      const dt = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString('fr-FR') : '-';
+                      let st = '<span class="text-yellow-400">En attente</span>';
+                      if(d.status === 'approved') st = '<span class="text-green-400 font-bold">Validé</span>';
+                      if(d.status === 'rejected') st = '<span class="text-red-400">Rejeté</span>';
+
+                      html += `
+                          <div class="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800">
+                              <div>
+                                  <span class="font-bold text-white">${d.amount} USDT</span> 
+                                  <span class="text-[10px] text-slate-400">(${dt})</span>
+                              </div>
+                              <div>${st}</div>
+                          </div>
+                      `;
+                  });
+                  container.innerHTML = html;
+              });
+        }
+
+        async function processDeposit() {
+            const amount = parseFloat(document.getElementById('depAmount').value);
+            const fileInput = document.getElementById('depProofFile');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showNotification("Veuillez joindre une preuve de paiement (capture d'écran).", "error");
+                return;
+            }
+
+            showNotification("Téléversement et soumission du dépôt en cours...", "info");
+
+            setTimeout(async () => {
+                try {
+                    await db.collection("deposits").add({
+                        userId: currentUser.uid,
+                        vipLevel: selectedVipLevelForDeposit,
+                        amount: amount,
+                        method: document.getElementById('depositMethod').value,
+                        status: 'pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    showNotification("Dépôt soumis avec succès ! En attente d'approbation admin.", "success");
+                    backToVipSelection();
+                    switchTab('dashboard');
+                } catch (err) {
+                    showNotification("Erreur lors de la soumission : " + err.message, "error");
+                }
+            }, 1000);
+        }
+
+        function updateDepositAddress() {
+            const method = document.getElementById('depositMethod').value;
+            const label = document.getElementById('networkLabel');
+            const addrText = document.getElementById('depositAddressText');
+
+            if (method === 'TRC20') {
+                label.innerText = "(TRC20)";
+                addrText.innerText = "TDcSMa4Fs4BmYzLnkXzLi2Boo3ZQRhybB9";
+            } else {
+                label.innerText = "(BEP20)";
+                addrText.innerText = "0x89274291B84910283A4918204918204A910283F1";
+            }
+        }
+
+        function copyDepositAddress() {
+            const text = document.getElementById('depositAddressText').innerText;
+            navigator.clipboard.writeText(text);
+            showNotification("Adresse de dépôt copiée !", "success");
+        }
+
+        function copyRef() {
+            const code = document.getElementById('refCodeDisplay').innerText;
+            const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
+            navigator.clipboard.writeText(link);
+            showNotification("Lien d'invitation copié dans le presse-papier !", "success");
+        }
+
+        function openCS() {
+            showNotification("Redirection vers le support client Telegram / WhatsApp...", "info");
+            window.open("https://t.me/+nJswG8PCooQyOWQ0", "_blank");
+        }
+
+        function switchTab(tabName) {
+            const views = ['dashboard', 'tasks', 'team', 'profile', 'recharge', 'withdraw'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            const target = document.getElementById(`view-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            const navs = ['dashboard', 'tasks', 'team', 'profile'];
+            navs.forEach(n => {
+                const btn = document.getElementById(`nav-${n}`);
+                if (btn) {
+                    if (n === tabName) {
+                        btn.className = "flex flex-col items-center gap-1 text-yellow-400";
+                    } else {
+                        btn.className = "flex flex-col items-center gap-1 text-slate-500";
+                    }
+                }
+            });
+
+            if (tabName === 'withdraw') {
+                updateWithdrawalRulesUI();
+            }
+        }
+
+        function renderVIPs() {
+            const container = document.getElementById('vipContainer');
+            if(!container) return;
+
+            container.innerHTML = vipData.map(v => {
+                const isCurrent = state.userVip === v.level;
+                return `
+                    <div class="card-gradient border ${isCurrent ? 'border-yellow-500 ring-1 ring-yellow-500/50' : 'border-slate-800'} rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center font-bold text-slate-900 text-lg">
+                                ${v.icon}
+                            </div>
+                            <div>
+                                <div class="font-extrabold text-white text-sm">VIP ${v.level} ${isCurrent ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded ml-1">Actif</span>' : ''}</div>
+                                <div class="text-[11px] text-slate-400">Revenu : <b class="text-green-400">${v.daily} USDT / jour</b></div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-bold text-white">${v.price} USDT</div>
+                            <button onclick="switchTab('recharge'); proceedToPayment(${v.level});" class="text-[10px] text-yellow-400 hover:underline mt-1 block">
+                                ${isCurrent ? 'Mettre à niveau' : 'Investir'} ➔
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateUI() {
+            document.getElementById('totalBalance').innerText = (state.taskRevenues + state.commissions).toFixed(2);
+            document.getElementById('taskRevenues').innerText = state.taskRevenues.toFixed(2);
+            document.getElementById('commissions').innerText = state.commissions.toFixed(2);
+            document.getElementById('commBalanceText').innerText = state.commissions.toFixed(2);
+            document.getElementById('userVipBadge').innerText = `VIP ${state.userVip}`;
+            document.getElementById('profileVipTag').innerText = `VIP ${state.userVip}`;
+        }
+
+        async function logout() {
+            await firebase.auth().signOut();
+            showNotification("Déconnexion réussie.", "info");
+        }
+    </script>
+</body>
+</html>
