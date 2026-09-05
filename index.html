@@ -271,8 +271,7 @@
                             <i class="fa-solid fa-lock text-sm"></i> Condition pour débloquer les tâches suivantes :
                         </div>
                         <p class="text-[11px] text-slate-300" data-i18n="unlock_condition_desc">
-                            👥 <b>INVITER 2 PERSONNES</b><br>
-                            Vos 2 filleuls doivent s'inscrire, faire un dépôt et faire **approuver** leur dépôt par l'administrateur.
+                            👥 <b>INVITER 2 PERSONNES</b><br>Vos 2 filleuls doivent s'inscrire, faire un dépôt et faire **approuver** leur dépôt par l'administrateur.
                         </p>
                     </div>
 
@@ -1949,8 +1948,6 @@
         }
 
         // Compresse la capture côté téléphone avant de l'enregistrer dans Firestore.
-        // Cela évite les blocages de Firebase Storage et permet à l'administrateur
-        // d'afficher directement la preuve depuis le document du dépôt.
         function compressDepositProof(file) {
             return new Promise((resolve, reject) => {
                 if (!file) return resolve(null);
@@ -1963,44 +1960,28 @@
                 reader.onerror = () => reject(new Error("Impossible de lire la capture sélectionnée."));
                 reader.onload = () => {
                     const img = new Image();
-                    img.onerror = () => reject(new Error("La capture sélectionnée est invalide."));
+                    img.onerror = () => reject(new Error("Impossible de charger l'image."));
                     img.onload = () => {
-                        const maxSide = 1100;
-                        const ratio = Math.min(1, maxSide / Math.max(img.width, img.height));
                         const canvas = document.createElement('canvas');
-                        canvas.width = Math.max(1, Math.round(img.width * ratio));
-                        canvas.height = Math.max(1, Math.round(img.height * ratio));
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 800;
 
-                        const ctx = canvas.getContext('2d', { alpha: false });
-                        if (!ctx) {
-                            reject(new Error("Votre navigateur ne permet pas de traiter cette image."));
-                            return;
+                        if (width > height && width > maxDim) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else if (height >= width && height > maxDim) {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
                         }
 
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
 
-                        // On réduit progressivement pour rester largement sous la limite
-                        // Firestore d'environ 1 MiB par document.
-                        let quality = 0.72;
-                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        while (dataUrl.length > 850000 && quality > 0.35) {
-                            quality -= 0.07;
-                            dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        }
-
-                        if (dataUrl.length > 900000) {
-                            reject(new Error("Cette capture est trop lourde. Essayez une capture d'écran plus petite."));
-                            return;
-                        }
-
-                        resolve({
-                            dataUrl: dataUrl,
-                            originalName: file.name,
-                            mimeType: 'image/jpeg',
-                            size: Math.round(dataUrl.length * 0.75)
-                        });
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(dataUrl);
                     };
                     img.src = reader.result;
                 };
@@ -2009,191 +1990,92 @@
         }
 
         async function processDeposit() {
-            const button = document.querySelector('button[onclick="processDeposit()"]');
-            const amountInput = document.getElementById('depAmount');
-            const txInput = document.getElementById('depTxId');
+            const amount = parseFloat(document.getElementById('depAmount').value);
+            const txId = document.getElementById('depTxId').value.trim();
+            const method = document.getElementById('depositMethod').value;
             const fileInput = document.getElementById('depProofFile');
 
-            const amount = parseFloat(amountInput ? amountInput.value : '0');
-            const txId = txInput ? txInput.value.trim() : '';
-
-            if (!currentUser || !currentUser.uid) {
-                showNotification("Votre session a expiré. Veuillez vous reconnecter.", "error");
-                return;
-            }
-
-            if (!Number.isFinite(amount) || amount <= 0) {
-                showNotification("Veuillez saisir un montant de dépôt valide.", "error");
-                if (amountInput) amountInput.focus();
-                return;
-            }
-
             if (!txId) {
-                showNotification("Veuillez saisir votre ID de transaction (TxID / Hash).", "error");
-                if (txInput) txInput.focus();
+                showNotification("Veuillez entrer l'ID de transaction (TxID).", "error");
                 return;
             }
-
-            if (txId.length < 8) {
-                showNotification("Le TxID semble trop court. Vérifiez l'ID de transaction copié depuis Binance.", "error");
-                if (txInput) txInput.focus();
-                return;
-            }
-
-            if (button) {
-                button.disabled = true;
-                button.style.opacity = '0.65';
-                button.style.pointerEvents = 'none';
-            }
-
-            showNotification("Préparation de la preuve et enregistrement du dépôt...", "info");
 
             try {
-                const network = document.getElementById('depositMethod')?.value || 'TRC20';
-                const depositAddress = document.getElementById('depositAddressText')?.innerText.trim() || '';
-                const depositRef = db.collection("deposits").doc();
-
-                let proofDataUrl = null;
-                let proofFileName = null;
-
-                // La capture reste facultative. Si elle existe, elle est compressée
-                // puis enregistrée directement dans le document Firestore.
-                if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-
-                    if (file.size > 10 * 1024 * 1024) {
-                        throw new Error("La capture ne doit pas dépasser 10 Mo avant compression.");
-                    }
-
-                    showNotification("Traitement de la capture d'écran...", "info");
-                    const proof = await compressDepositProof(file);
-                    proofDataUrl = proof.dataUrl;
-                    proofFileName = proof.originalName;
+                showNotification("Traitement du dépôt en cours...", "info");
+                let proofBase64 = null;
+                if (fileInput.files && fileInput.files[0]) {
+                    proofBase64 = await compressDepositProof(fileInput.files[0]);
                 }
 
-                showNotification("Enregistrement du dépôt...", "info");
-
-                await depositRef.set({
-                    depositId: depositRef.id,
+                await db.collection("deposits").add({
                     userId: currentUser.uid,
-                    vipLevel: selectedVipLevelForDeposit,
                     amount: amount,
-                    network: network,
-                    method: network,
-                    depositAddress: depositAddress,
+                    vipLevel: selectedVipLevelForDeposit,
+                    method: method,
                     txId: txId,
-                    txID: txId,
-                    proofUrl: proofDataUrl,
-                    proofData: proofDataUrl,
-                    proofFileName: proofFileName,
-                    hasProof: !!proofDataUrl,
-                    status: 'pending',
+                    proofBase64: proofBase64 || "",
+                    status: "pending",
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                showNotification("Dépôt soumis avec succès ! En attente d'approbation admin.", "success");
-
-                if (txInput) txInput.value = '';
+                document.getElementById('depTxId').value = '';
                 if (fileInput) fileInput.value = '';
-
-                setTimeout(() => {
-                    backToVipSelection();
-                    switchTab('dashboard');
-                }, 700);
+                
+                showNotification("Dépôt soumis avec succès ! En attente d'approbation administrateur.", "success");
+                switchTab('dashboard');
             } catch (err) {
-                console.error('Erreur processDeposit:', err);
-                const message = err && err.message ? err.message : "Une erreur inconnue est survenue.";
-                showNotification("Échec du dépôt : " + message, "error");
-            } finally {
-                if (button) {
-                    button.disabled = false;
-                    button.style.opacity = '';
-                    button.style.pointerEvents = '';
-                }
+                showNotification("Erreur lors de la soumission du dépôt : " + err.message, "error");
             }
         }
 
         function updateDepositAddress() {
             const method = document.getElementById('depositMethod').value;
-            const label = document.getElementById('networkLabel');
             const addrText = document.getElementById('depositAddressText');
+            const netLabel = document.getElementById('networkLabel');
 
             if (method === 'TRC20') {
-                label.innerText = "(TRC20)";
                 addrText.innerText = "TDcSMa4Fs4BmYzLnkXzLi2Boo3ZQRhybB9";
+                netLabel.innerText = "(TRC20)";
             } else {
-                label.innerText = "(BEP20)";
-                addrText.innerText = "0x89274291B84910283A4918204918204A910283F1";
+                addrText.innerText = "0x71C...b49E82f";
+                netLabel.innerText = "(BEP20)";
             }
         }
 
         function copyDepositAddress() {
-            const text = document.getElementById('depositAddressText').innerText;
-            navigator.clipboard.writeText(text);
-            showNotification("Adresse de dépôt copiée !", "success");
+            const addr = document.getElementById('depositAddressText').innerText;
+            navigator.clipboard.writeText(addr);
+            showNotification("Adresse de dépôt copiée dans le presse-papier !", "success");
         }
 
         function copyRef() {
-            const code = document.getElementById('refCodeDisplay').innerText;
-            const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
+            if (!currentUser) return;
+            const link = `${window.location.origin}${window.location.pathname}?ref=INF-${currentUser.uid.substring(0,6).toUpperCase()}`;
             navigator.clipboard.writeText(link);
-            showNotification("Lien d'invitation copié dans le presse-papier !", "success");
-        }
-
-        function openCS() {
-            showNotification("Redirection vers le support client Telegram / WhatsApp...", "info");
-            window.open("https://t.me/+nJswG8PCooQyOWQ0", "_blank");
-        }
-
-        function switchTab(tabName) {
-            const views = ['dashboard', 'tasks', 'team', 'profile', 'recharge', 'withdraw'];
-            views.forEach(v => {
-                const el = document.getElementById(`view-${v}`);
-                if (el) el.classList.add('hidden');
-            });
-
-            const target = document.getElementById(`view-${tabName}`);
-            if (target) target.classList.remove('hidden');
-
-            const navs = ['dashboard', 'tasks', 'team', 'profile'];
-            navs.forEach(n => {
-                const btn = document.getElementById(`nav-${n}`);
-                if (btn) {
-                    if (n === tabName) {
-                        btn.className = "flex flex-col items-center gap-1 text-yellow-400";
-                    } else {
-                        btn.className = "flex flex-col items-center gap-1 text-slate-500";
-                    }
-                }
-            });
-
-            if (tabName === 'withdraw') {
-                updateWithdrawalRulesUI();
-            }
+            showNotification("Lien d'invitation copié avec succès !", "success");
         }
 
         function renderVIPs() {
             const container = document.getElementById('vipContainer');
-            if(!container) return;
+            container.innerHTML = vipData.map(vip => {
+                const isCurrent = state.userVip === vip.level;
+                const borderClass = isCurrent ? "border-yellow-500 shadow-yellow-500/10 shadow-lg" : "border-slate-800";
+                const bgCurrent = isCurrent ? "bg-slate-900/90" : "bg-slate-900/50";
 
-            container.innerHTML = vipData.map(v => {
-                const isCurrent = state.userVip === v.level;
                 return `
-                    <div class="card-gradient border ${isCurrent ? 'border-yellow-500 ring-1 ring-yellow-500/50' : 'border-slate-800'} rounded-xl p-4 flex items-center justify-between">
+                    <div class="${bgCurrent} border ${borderClass} rounded-xl p-4 flex items-center justify-between transition">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center font-bold text-slate-900 text-lg">
-                                ${v.icon}
+                            <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-slate-900 font-bold text-lg">
+                                ${vip.icon}
                             </div>
                             <div>
-                                <div class="font-extrabold text-white text-sm">VIP ${v.level} ${isCurrent ? '<span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded ml-1">Actif</span>' : ''}</div>
-                                <div class="text-[11px] text-slate-400">Revenu : <b class="text-green-400">${v.daily} USDT / jour</b></div>
+                                <div class="font-extrabold text-white text-sm">VIP ${vip.level}</div>
+                                <div class="text-[11px] text-slate-400">Prix : <b class="text-white">${vip.price} USDT</b></div>
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="text-xs font-bold text-white">${v.price} USDT</div>
-                            <button onclick="switchTab('recharge'); proceedToPayment(${v.level});" class="text-[10px] text-yellow-400 hover:underline mt-1 block">
-                                ${isCurrent ? 'Mettre à niveau' : 'Investir'} ➔
-                            </button>
+                            <div class="text-xs font-bold text-green-400">+${vip.daily.toFixed(2)} USDT/j</div>
+                            <div class="text-[10px] text-slate-400">5 QCM</div>
                         </div>
                     </div>
                 `;
@@ -2209,9 +2091,53 @@
             document.getElementById('profileVipTag').innerText = `VIP ${state.userVip}`;
         }
 
-        async function logout() {
-            await firebase.auth().signOut();
-            showNotification("Déconnexion réussie.", "info");
+        function switchTab(tabName) {
+            const views = ['dashboard', 'tasks', 'team', 'profile', 'recharge', 'withdraw'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) {
+                    if (v === tabName) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                }
+            });
+
+            const navButtons = {
+                'dashboard': 'nav-dashboard',
+                'tasks': 'nav-tasks',
+                'team': 'nav-team',
+                'profile': 'nav-profile'
+            };
+
+            Object.keys(navButtons).forEach(k => {
+                const btn = document.getElementById(navButtons[k]);
+                if (btn) {
+                    if (k === tabName) {
+                        btn.className = "flex flex-col items-center gap-1 text-yellow-400";
+                    } else {
+                        btn.className = "flex flex-col items-center gap-1 text-slate-500";
+                    }
+                }
+            });
+
+            if (tabName === 'recharge') {
+                backToVipSelection();
+            }
+        }
+
+        function openCS() {
+            showNotification("Redirection vers le support client Telegram...", "info");
+            setTimeout(() => {
+                window.open("https://t.me/support", "_blank");
+            }, 1000);
+        }
+
+        function logout() {
+            firebase.auth().signOut().then(() => {
+                showNotification("Déconnexion réussie.", "success");
+            });
         }
     </script>
 </body>
